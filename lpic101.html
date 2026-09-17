@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Quiz LPIC-101 — 120 Questões</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:#0f172a;color:#e5e7eb;line-height:1.55;padding:18px;min-height:100vh}
+.container{max-width:900px;margin:0 auto}
+header{background:linear-gradient(135deg,#0ea5e9,#6366f1);color:#fff;padding:24px;border-radius:14px 14px 0 0;box-shadow:0 4px 18px rgba(14,165,233,.25)}
+h1{font-size:22px;margin-bottom:4px;letter-spacing:-.2px}
+.subtitle{opacity:.92;font-size:13.5px}
+.stats{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+.stat{background:rgba(255,255,255,.16);padding:8px 14px;border-radius:8px;font-size:12.5px;min-width:82px}
+.stat b{font-size:17px;display:block;font-weight:700}
+.progress{height:6px;background:rgba(255,255,255,.22);border-radius:3px;margin-top:14px;overflow:hidden}
+.pbar{height:100%;background:linear-gradient(90deg,#4ade80,#22c55e);transition:width .3s;width:0}
+.card{background:#1e293b;color:#e5e7eb;padding:28px;border-radius:0 0 14px 14px;box-shadow:0 2px 12px rgba(0,0,0,.35);min-height:460px}
+.qnum{color:#94a3b8;font-size:12.5px;margin-bottom:10px;font-weight:600;letter-spacing:.3px;display:flex;justify-content:space-between;align-items:center}
+.qtype{background:#334155;color:#cbd5e1;padding:3px 10px;border-radius:6px;font-size:11.5px;letter-spacing:.5px;text-transform:uppercase}
+.qtype.multi{background:#7c3aed;color:#fff}
+.qtype.text{background:#f59e0b;color:#1f2937}
+.qtext{font-size:16.5px;font-weight:600;margin-bottom:20px;line-height:1.55;color:#f1f5f9}
+.qtext code,.qtext pre{background:#0f172a;color:#67e8f9;padding:2px 6px;border-radius:4px;font-family:Consolas,"Courier New",monospace;font-size:14px}
+.qtext pre{padding:10px 14px;margin:10px 0;overflow-x:auto;display:block;white-space:pre-wrap}
+.alts{display:flex;flex-direction:column;gap:9px}
+.alt{display:flex;align-items:flex-start;gap:12px;padding:13px 15px;border:2px solid #334155;border-radius:10px;cursor:pointer;text-align:left;background:#0f172a;font-size:14.5px;font-family:inherit;color:#e5e7eb;transition:border-color .12s,background .12s;line-height:1.45;width:100%}
+.alt:hover:not(:disabled){border-color:#0ea5e9;background:#1e3a5f}
+.alt:disabled{cursor:default}
+.alt.selected{border-color:#0ea5e9;background:#1e3a5f}
+.alt.correct{border-color:#16a34a;background:#14532d;color:#dcfce7}
+.alt.wrong{border-color:#dc2626;background:#7f1d1d;color:#fee2e2}
+.alt code{background:rgba(255,255,255,.09);padding:1px 5px;border-radius:3px;font-family:Consolas,"Courier New",monospace;font-size:13.5px;color:#67e8f9}
+.alt.correct code,.alt.wrong code{background:rgba(0,0,0,.28);color:inherit}
+.letter{flex-shrink:0;width:28px;height:28px;border-radius:50%;background:#475569;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;line-height:1}
+.alt.selected .letter{background:#0ea5e9}
+.alt.correct .letter{background:#16a34a}
+.alt.wrong .letter{background:#dc2626}
+.text-input{width:100%;padding:14px 16px;border:2px solid #334155;border-radius:10px;background:#0f172a;color:#e5e7eb;font-size:15px;font-family:Consolas,"Courier New",monospace}
+.text-input:focus{outline:none;border-color:#0ea5e9}
+.text-input.correct{border-color:#16a34a;background:#14532d;color:#dcfce7}
+.text-input.wrong{border-color:#dc2626;background:#7f1d1d;color:#fee2e2}
+.feedback{margin-top:20px;padding:16px 18px;border-radius:10px;font-size:14px;line-height:1.55}
+.feedback.ok{background:#14532d;border-left:4px solid #22c55e;color:#dcfce7}
+.feedback.err{background:#78350f;border-left:4px solid #f59e0b;color:#fef3c7}
+.feedback h3{margin-bottom:6px;font-size:14.5px;font-weight:700}
+.feedback code{background:rgba(0,0,0,.35);padding:1px 5px;border-radius:3px;font-family:Consolas,"Courier New",monospace;color:#67e8f9}
+.actions{margin-top:22px;display:flex;gap:10px;flex-wrap:wrap}
+.btn{padding:11px 22px;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;font-family:inherit;transition:background .12s}
+.btn-primary{background:#0ea5e9;color:#fff}
+.btn-primary:hover{background:#0284c7}
+.btn-secondary{background:#334155;color:#e5e7eb}
+.btn-secondary:hover{background:#475569}
+.btn-danger{background:#7f1d1d;color:#fee2e2}
+.btn-danger:hover{background:#991b1b}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.finished{text-align:center;padding:40px 20px}
+.finished h2{font-size:26px;margin-bottom:12px;color:#22c55e}
+.finished p{font-size:15px;margin-bottom:20px;color:#cbd5e1}
+.finished .actions{justify-content:center}
+.hint{color:#94a3b8;font-size:12.5px;margin-left:auto;align-self:center}
+.mode-toggle{display:flex;gap:6px;margin-top:14px;flex-wrap:wrap}
+.mode-toggle button{padding:6px 14px;background:rgba(255,255,255,.14);border:none;border-radius:6px;color:#fff;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit}
+.mode-toggle button:hover{background:rgba(255,255,255,.24)}
+.menu{padding:8px 0}
+.menu h2{font-size:20px;margin-bottom:8px;color:#f1f5f9}
+.menu p{color:#94a3b8;font-size:14px;margin-bottom:22px;line-height:1.55}
+.menu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:24px}
+.menu-opt{padding:22px 12px;border:2px solid #334155;border-radius:12px;background:#0f172a;color:#e5e7eb;cursor:pointer;font-family:inherit;font-size:14px;font-weight:600;text-align:center;transition:border-color .12s,background .12s}
+.menu-opt:hover{border-color:#0ea5e9;background:#1e3a5f}
+.menu-opt b{font-size:32px;display:block;color:#0ea5e9;margin-bottom:6px;font-weight:800}
+.menu-opt small{display:block;font-size:11.5px;color:#94a3b8;font-weight:500;margin-top:6px;letter-spacing:.3px}
+.menu-custom{display:flex;gap:10px;align-items:center;padding:16px;border:2px dashed #334155;border-radius:12px;flex-wrap:wrap}
+.menu-custom label{font-size:13.5px;color:#cbd5e1;font-weight:600}
+.menu-custom input{width:90px;padding:9px 12px;border:2px solid #334155;border-radius:8px;background:#0f172a;color:#e5e7eb;font-size:15px;font-family:inherit}
+.menu-custom input:focus{outline:none;border-color:#0ea5e9}
+.menu-tip{margin-top:20px;padding:14px 16px;background:#0f172a;border-left:3px solid #0ea5e9;border-radius:6px;font-size:13px;color:#cbd5e1;line-height:1.55}
+@media(max-width:640px){body{padding:10px}.card{padding:20px}header{padding:20px}h1{font-size:18px}.qtext{font-size:15px}.alt{padding:11px 13px;font-size:13.5px}.stat{min-width:70px;padding:7px 10px}.stat b{font-size:15px}.btn{padding:10px 16px;font-size:13px}}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+<h1>Quiz Interativo — LPIC-101</h1>
+<div class="subtitle" id="subtitle">Escolha o tamanho do simulado para começar</div>
+<div class="stats" id="stats" style="display:none">
+<div class="stat"><b id="s-ans">0</b>Respondidas</div>
+<div class="stat"><b id="s-ok">0</b>Acertos</div>
+<div class="stat"><b id="s-err">0</b>Erros</div>
+<div class="stat"><b id="s-pct">0%</b>Aproveitamento</div>
+<div class="stat"><b id="s-rem">0</b>Restantes</div>
+</div>
+<div class="progress" id="progresswrap" style="display:none"><div class="pbar" id="pbar"></div></div>
+<div class="mode-toggle">
+<button onclick="goMenu()">🔄 Novo simulado</button>
+<button onclick="openReport()" style="background:#f59e0b;color:#1f2937">📋 Ver erros</button>
+<button onclick="downloadReport()" style="background:#22c55e;color:#0f172a">⬇ Baixar relatório</button>
+<button onclick="copyClaudePrompt()" style="background:#a855f7;color:#fff">🤖 Prompt p/ Claude</button>
+</div>
+</header>
+<main class="card" id="main"></main>
+</div>
+<script>
+// ============================================================
+//  QUESTÕES LPIC-101  (traduzidas para português; comandos e
+//  caminhos técnicos preservados no original)
+// ============================================================
+// Formato:
+//   {t:"tipo", q:"pergunta", opts:[...], c:[índices corretos] ou "texto"}
+//   tipo: "s" = múltipla escolha (1 correta)
+//         "m" = múltipla escolha (2+ corretas)
+//         "t" = resposta textual (fill-in)
+// ============================================================
+
+const Q=[
+// ---- Página 1 ----
+{t:"m",q:`Considere o diretório abaixo:<br><pre>drwxrwxr-x 2 root sales 4096 Jan 1 15:21 sales</pre>Qual comando garante que novos arquivos criados dentro do diretório <code>sales</code> sejam de propriedade do grupo <code>sales</code>? (Escolha duas.)`,
+opts:[`<code>chmod g+s sales</code>`,`<code>setpol -R newgroup=sales sales</code>`,`<code>chgrp -p sales sales</code>`,`<code>chown --persistent *.sales sales</code>`,`<code>chmod 2775 sales</code>`],
+c:[0,4],
+e:`O bit SGID no diretório (aplicado por <code>chmod g+s</code> ou pelo modo octal <code>2775</code>) faz com que arquivos criados dentro dele herdem o grupo do diretório-pai.`},
+
+{t:"m",q:`Para exibir todos os sistemas de arquivo atualmente montados, quais dos comandos abaixo podem ser usados? (Escolha duas.)`,
+opts:[`<code>cat /proc/self/mounts</code>`,`<code>free</code>`,`<code>lsmounts</code>`,`<code>mount</code>`,`<code>cat /proc/filesystems</code>`],
+c:[0,3],
+e:`Sem argumentos, <code>mount</code> lista os montados. <code>/proc/self/mounts</code> (ou <code>/proc/mounts</code>) mostra o mesmo. <code>/proc/filesystems</code> lista tipos de FS suportados, não os montados.`},
+
+{t:"s",q:`Qual propriedade de um arquivo existente muda quando um hard link apontando para ele é criado?`,
+opts:[`Tamanho do arquivo`,`Contagem de links`,`Timestamp de modificação`,`Número do inode`,`Permissões`],
+c:[1],
+e:`Cada novo hard link incrementa o contador de links (o campo mostrado em <code>ls -l</code> logo após as permissões). Inode, tamanho, mtime e permissões continuam iguais.`},
+
+// ---- Página 2 ----
+{t:"m",q:`Quais wildcards fazem match nos nomes de arquivo abaixo? (Escolha duas.)<br><pre>ttyS0
+ttyS1
+ttyS2</pre>`,
+opts:[`<code>ttyS[1-5]</code>`,`<code>tty?[0-5]</code>`,`<code>tty*2</code>`,`<code>tty[A-Z][012]</code>`,`<code>tty[Ss][02]</code>`],
+c:[1,3],
+e:`<code>tty?[0-5]</code> aceita qualquer caractere seguido de dígito 0-5. <code>tty[A-Z][012]</code> exige uma letra maiúscula seguida de 0, 1 ou 2 — ambos batem em ttyS0, ttyS1, ttyS2.`},
+
+{t:"s",q:`Qual comando <code>chown</code> muda o dono para <code>dave</code> e o grupo para <code>staff</code> no arquivo <code>data.txt</code>?`,
+opts:[`<code>chown dave/staff data.txt</code>`,`<code>chown -u dave -g staff data.txt</code>`,`<code>chown --user dave --group staff data.txt</code>`,`<code>chown dave+staff data.txt</code>`,`<code>chown dave:staff data.txt</code>`],
+c:[4],
+e:`A sintaxe padrão é <code>chown usuário:grupo arquivo</code>. Também aceita <code>usuário.grupo</code>, mas não as outras formas.`},
+
+{t:"m",q:`Quando o conteúdo do kernel ring buffer é resetado? (Escolha duas.)`,
+opts:[`Quando o ring buffer é explicitamente resetado pelo comando <code>dmesg --clear</code>`,`Quando o ring buffer é lido pelo <code>dmesg</code> sem parâmetros adicionais`,`Após um tempo configurável (15 minutos por padrão) ter passado`,`Quando o kernel carrega um módulo que estava descarregado`,`Quando o sistema é desligado ou reinicializado`],
+c:[0,4],
+e:`O ring buffer só é limpo explicitamente (via <code>dmesg --clear</code>) ou quando o sistema perde o estado, ou seja, no shutdown/reboot.`},
+
+// ---- Página 3 ----
+{t:"s",q:`Qual valor de <code>umask</code> garante que novos arquivos tenham as permissões padrão <code>-rw-r-----</code>?`,
+opts:[`<code>0017</code>`,`<code>0640</code>`,`<code>0038</code>`,`<code>0227</code>`,`<code>0027</code>`],
+c:[4],
+e:`Arquivos são criados com base <code>666</code>. Aplicando umask <code>0027</code>: <code>666 & ~027 = 640</code>, ou seja, <code>rw-r-----</code>.`},
+
+{t:"m",q:`Quais comandos exibem os PIDs de todos os processos pertencentes ao usuário <code>root</code>? (Escolha duas.)`,
+opts:[`<code>pgrep -c root</code>`,`<code>pgrep -u root</code>`,`<code>pgrep -f root</code>`,`<code>pgrep -U 0</code>`,`<code>pgrep -c 0</code>`],
+c:[1,3],
+e:`<code>-u</code> filtra por effective UID (nome ou número). <code>-U 0</code> usa o real UID do root. <code>-c</code> conta; <code>-f</code> casa contra a linha de comando inteira.`},
+
+{t:"s",q:`Um pacote Debian cria vários arquivos durante a instalação. Qual dos comandos busca por pacotes que sejam donos do arquivo <code>/etc/debian_version</code>?`,
+opts:[`<code>apt-get search /etc/debian_version</code>`,`<code>apt -r /etc/debian_version</code>`,`<code>find /etc/debian_version -dpkg</code>`,`<code>dpkg -S /etc/debian_version</code>`,`<code>apt-file /etc/debian_version</code>`],
+c:[3],
+e:`<code>dpkg -S ARQUIVO</code> (search) identifica qual pacote instalado possui aquele arquivo.`},
+
+// ---- Página 4 ----
+{t:"s",q:`Qual comando converte todas as quebras CR-LF de <code>userlist.txt</code> para o padrão LF do Linux e grava em <code>newlist.txt</code>?`,
+opts:[`<code>tr -d '\\r' &lt; userlist.txt &gt; newlist.txt</code>`,`<code>tr -c '\\n\\r' '' &lt;newlist.txt&gt; userlist.txt</code>`,`<code>tr '\\r\\n' '' &lt;userlist.txt&gt; newlist.txt</code>`,`<code>tr '\\r' '\\n' userlist.txt newlist.txt</code>`,`<code>tr -s '/^M/^J/' userlist.txt newlist.txt</code>`],
+c:[0],
+e:`<code>tr -d '\\r'</code> exclui apenas o CR, deixando apenas LF. Redirecionamentos <code>&lt;</code> e <code>&gt;</code> tratam entrada e saída.`},
+
+{t:"s",q:`Qual é o propósito do comando <code>ldd</code>?`,
+opts:[`Lista quais bibliotecas compartilhadas um binário precisa para rodar.`,`Instala e atualiza bibliotecas compartilhadas.`,`Transforma um binário dinamicamente linkado em estático.`,`Define qual versão de uma biblioteca deve ser usada por padrão.`,`Executa um binário com caminho alternativo de busca de bibliotecas.`],
+c:[0],
+e:`<code>ldd BINÁRIO</code> mostra a lista de bibliotecas compartilhadas resolvidas para aquele executável.`},
+
+{t:"s",q:`Qual dos comandos do <code>vi</code> apaga duas linhas — a atual e a próxima?`,
+opts:[`<code>d2</code>`,`<code>2d</code>`,`<code>2dd</code>`,`<code>dd2</code>`,`<code>de12</code>`],
+c:[2],
+e:`No modo Normal, <code>[N]dd</code> apaga N linhas a partir da atual. <code>2dd</code> apaga 2 linhas.`},
+
+// ---- Página 5 ----
+{t:"m",q:`O que é verdadeiro sobre a configuração do <code>yum</code>? (Escolha duas.)`,
+opts:[`Mudanças na configuração dos repositórios entram em vigor após rodar <code>yum confupdate</code>`,`Mudanças na configuração do yum entram em vigor após reiniciar o serviço <code>yumd</code>`,`A configuração dos repositórios pode ser dividida em múltiplos arquivos`,`Configurações de repositório podem incluir variáveis como <code>$basearch</code> ou <code>$releasever</code>`,`Se <code>/etc/yum.repos.d/</code> tiver arquivos, <code>/etc/yum.conf</code> é ignorado`],
+c:[2,3],
+e:`Yum lê <code>/etc/yum.conf</code> e cada <code>*.repo</code> em <code>/etc/yum.repos.d/</code>. Variáveis como <code>$basearch</code> e <code>$releasever</code> são expandidas nas URLs.`},
+
+{t:"s",q:`Qual é o PID do processo init em um sistema baseado em System V init?`,
+opts:[`-1`,`0`,`1`,`Muda a cada boot`,`Igual ao runlevel atual`],
+c:[2],
+e:`O <code>init</code> é o primeiro processo em espaço de usuário e recebe sempre PID 1.`},
+
+{t:"m",q:`Em vez de informar um dispositivo explícito no <code>/etc/fstab</code>, quais opções podem ser usadas para identificar a partição desejada? (Escolha duas.)`,
+opts:[`<code>LABEL</code>`,`<code>ID</code>`,`<code>FIND</code>`,`<code>NAME</code>`,`<code>UUID</code>`],
+c:[0,4],
+e:`Rótulo (<code>LABEL=...</code>) e identificador único do FS (<code>UUID=...</code>) são as duas alternativas recomendadas ao caminho do dispositivo.`},
+
+// ---- Página 6 ----
+{t:"s",q:`Qual é o efeito da opção <code>-v</code> do <code>grep</code>?`,
+opts:[`Ativa cor para destacar as partes casadas.`,`Mostra a versão do comando.`,`Retorna apenas as linhas que NÃO casam com o padrão.`,`Muda a ordem da saída mostrando a última linha casada primeiro.`,`Mostra todas as linhas prefixando as que casam com <code>+</code>.`],
+c:[2],
+e:`<code>-v</code> = invert-match; imprime as linhas que não correspondem ao padrão.`},
+
+{t:"s",q:`Qual é o propósito do comando <code>xargs</code>?`,
+opts:[`Passa argumentos para um servidor X.`,`Repete a execução de um comando com parâmetros diferentes a cada invocação.`,`Lê a entrada padrão e constrói/executa comandos com os itens lidos.`,`Faz uma pergunta gráfica e retorna a resposta ao shell.`,`Permite usar opções longas (como <code>--help</code>) em comandos que só aceitam curtas.`],
+c:[2],
+e:`<code>xargs</code> lê itens da stdin e os passa como argumentos a outro comando, evitando limites de linha de comando.`},
+
+{t:"m",q:`Quais informações o comando <code>lspci</code> pode mostrar sobre o hardware do sistema? (Escolha três.)`,
+opts:[`Tipo da bateria do sistema`,`Configurações de IRQ dos dispositivos`,`Velocidade do barramento PCI`,`Endereço MAC Ethernet`,`Identificação do fabricante do dispositivo`],
+c:[1,2,4],
+e:`<code>lspci</code> exibe informações do barramento PCI: IRQ, velocidade do barramento e identificação de fabricante/dispositivo. MAC é mostrado por <code>ip</code>/<code>ifconfig</code>.`},
+
+// ---- Página 7 ----
+{t:"m",q:`Quais comandos listam todos os arquivos e diretórios dentro de <code>/tmp/</code> e seus subdiretórios que pertencem ao usuário root? (Escolha duas.)`,
+opts:[`<code>find /tmp -user root -print</code>`,`<code>find -path /tmp -uid root</code>`,`<code>find /tmp -uid root -print</code>`,`<code>find /tmp -user root</code>`,`<code>find -path /tmp -user root -print</code>`],
+c:[0,3],
+e:`<code>-user root</code> filtra pelo dono (nome). <code>-print</code> é o padrão implícito quando nenhuma ação é dada.`},
+
+{t:"s",q:`Qual daemon trata eventos de gerenciamento de energia em um sistema Linux?`,
+opts:[`<code>acpid</code>`,`<code>batteryd</code>`,`<code>pwrmgntd</code>`,`<code>psd</code>`,`<code>inetd</code>`],
+c:[0],
+e:`<code>acpid</code> (Advanced Configuration and Power Interface Daemon) recebe os eventos ACPI do kernel.`},
+
+{t:"t",q:`Qual arquivo do sistema de arquivos <code>/proc</code> lista os parâmetros passados do bootloader para o kernel? (Informe APENAS o nome do arquivo, sem caminho.)`,
+c:"cmdline",
+e:`O <code>/proc/cmdline</code> mostra a linha de comando do kernel — os argumentos que o bootloader (GRUB, etc.) passou.`},
+
+// ---- Página 8 ----
+{t:"s",q:`Qual comando desinstala um pacote mas mantém seus arquivos de configuração no caso de o pacote ser reinstalado?`,
+opts:[`<code>dpkg -s pkgname</code>`,`<code>dpkg -L pkgname</code>`,`<code>dpkg -P pkgname</code>`,`<code>dpkg -v pkgname</code>`,`<code>dpkg -r pkgname</code>`],
+c:[4],
+e:`<code>dpkg -r</code> (remove) tira o pacote mas mantém os arquivos de configuração. <code>-P</code> (purge) removeria as configurações também.`},
+
+{t:"s",q:`Onde o bootloader fica armazenado no disco em um sistema UEFI?`,
+opts:[`No EFI Boot Record (EBR).`,`No Master Boot Record (MBR).`,`Na EFI System Partition (ESP).`,`Na partição rotulada como "boot".`,`Na partição número 127.`],
+c:[2],
+e:`A ESP é uma partição FAT dedicada que contém os carregadores de boot EFI (<code>.efi</code>).`},
+
+{t:"s",q:`Qual subcomando do <code>apt-get</code> instala as versões mais recentes de todos os pacotes atualmente instalados?`,
+opts:[`<code>auto-update</code>`,`<code>dist-upgrade</code>`,`<code>full-upgrade</code>`,`<code>install</code>`,`<code>update</code>`],
+c:[1],
+e:`<code>apt-get dist-upgrade</code> atualiza pacotes tratando alterações de dependências. <code>update</code> só atualiza o índice.`},
+
+// ---- Página 9 ----
+{t:"s",q:`Qual sinal é enviado a um processo quando a combinação <code>Ctrl+Z</code> é pressionada?`,
+opts:[`<code>SIGTERM</code>`,`<code>SIGCONT</code>`,`<code>SIGSTOP</code>`,`<code>SIGKILL</code>`,`<code>SIGINT</code>`],
+c:[2],
+e:`<code>Ctrl+Z</code> gera <code>SIGTSTP</code>/<code>SIGSTOP</code>, que suspende o processo em foreground. Retomar com <code>fg</code>/<code>bg</code>.`},
+
+{t:"s",q:`Imediatamente após apagar 3 linhas no <code>vi</code> e mover o cursor para outra linha, qual comando de um único caractere insere o conteúdo apagado ABAIXO da linha atual?`,
+opts:[`<code>i</code> (minúsculo)`,`<code>p</code> (minúsculo)`,`<code>P</code> (maiúsculo)`,`<code>U</code> (maiúsculo)`,`<code>u</code> (minúsculo)`],
+c:[1],
+e:`<code>p</code> minúsculo cola o conteúdo do buffer após o cursor/linha atual. <code>P</code> maiúsculo cola antes.`},
+
+{t:"m",q:`Quais comandos podem determinar há quanto tempo o sistema está em execução? (Escolha duas.)`,
+opts:[`<code>uptime</code>`,`<code>up</code>`,`<code>time --up</code>`,`<code>uname -u</code>`,`<code>top</code>`],
+c:[0,4],
+e:`<code>uptime</code> mostra o tempo desde o boot. O cabeçalho do <code>top</code> também exibe o uptime.`},
+
+// ---- Página 10 ----
+{t:"s",q:`Qual comando é usado para mudar opções e parâmetros posicionais dentro de um shell Bash em execução?`,
+opts:[`<code>history</code>`,`<code>setsh</code>`,`<code>bashconf</code>`,`<code>set</code>`,`<code>envsetup</code>`],
+c:[3],
+e:`<code>set</code> altera opções do shell (<code>-e</code>, <code>-o</code>...) e também redefine parâmetros posicionais (<code>set -- a b c</code>).`},
+
+{t:"t",q:`Qual diretório contém arquivos de configuração para repositórios yum adicionais? (Informe o caminho COMPLETO.)`,
+c:"/etc/yum.conf",
+e:`Resposta conforme o gabarito: <code>/etc/yum.conf</code>. Observação: os repositórios adicionais geralmente ficam em <code>/etc/yum.repos.d/</code>.`},
+
+{t:"s",q:`Ao remover um pacote em um sistema com <code>dpkg</code>, qual opção garante que os arquivos de configuração também sejam removidos?`,
+opts:[`<code>--clean</code>`,`<code>--purge</code>`,`<code>--vacuum</code>`,`<code>--remove</code>`,`<code>--declare</code>`],
+c:[1],
+e:`<code>dpkg --purge pacote</code> remove tanto binários quanto arquivos de configuração.`},
+
+// ---- Página 11 ----
+{t:"s",q:`De acordo com o FHS, em qual diretório ficam as páginas de manual (man)?`,
+opts:[`<code>/opt/man/</code>`,`<code>/usr/doc/</code>`,`<code>/usr/share/man/</code>`,`<code>/var/pkg/man</code>`,`<code>/var/man/</code>`],
+c:[2],
+e:`O FHS define <code>/usr/share/man/</code> como o local padrão das man pages do sistema.`},
+
+{t:"s",q:`Um usuário criou por engano o subdiretório <code>\\dir</code> no home dele. Qual comando remove esse diretório?`,
+opts:[`<code>rmdir ~/\\\\dir</code>`,`<code>rmdir "~/\\dir?</code>`,`<code>rmdir ~/'dir'</code>`,`<code>rmdir ~/\\dir</code>`,`<code>rmdir '~/\\dir'</code>`],
+c:[0],
+e:`A barra invertida precisa ser escapada (<code>\\\\</code>) para o shell entregar um único <code>\\</code> literal ao <code>rmdir</code>.`},
+
+{t:"s",q:`Qual afirmação é verdadeira quando um sistema de arquivos que não está em <code>/etc/fstab</code> nem é conhecido pelo systemd é montado manualmente?`,
+opts:[`systemd ignora quaisquer montagens manuais que não usem <code>systemctl mount</code>.`,`O comando <code>systemctl mountsync</code> pode ser usado para criar uma unidade de mount baseada no mount existente.`,`systemd gera automaticamente uma unidade de mount e monitora o ponto de montagem sem alterá-lo.`,`A menos que uma unidade de mount seja criada, systemd desmonta o FS após pouco tempo.`,`É preciso usar <code>systemctl unmount</code> porque o systemd abre um file descriptor no ponto de montagem.`],
+c:[2],
+e:`O systemd cria automaticamente uma <code>.mount</code> transitória para representar o ponto de montagem manual e o monitora.`},
+
+// ---- Página 12 ----
+{t:"t",q:`Qual arquivo de configuração do System V init é comumente usado para definir o runlevel padrão? (Informe o caminho COMPLETO.)`,
+c:"/etc/inittab",
+e:`Em System V, o runlevel padrão é definido pela linha <code>id:N:initdefault:</code> dentro de <code>/etc/inittab</code>.`},
+
+{t:"s",q:`Qual arquivo, localizado no diretório home do usuário, contém o histórico do Bash?`,
+opts:[`<code>.bashrc_history</code>`,`<code>.bash_histfile</code>`,`<code>.history</code>`,`<code>.bash_history</code>`,`<code>.history_bash</code>`],
+c:[3],
+e:`O Bash grava o histórico em <code>~/.bash_history</code> (definido por <code>HISTFILE</code>).`},
+
+{t:"m",q:`O que é verdadeiro sobre o firmware UEFI? (Escolha duas.)`,
+opts:[`Ele consegue ler e interpretar tabelas de partição`,`Ele consegue usar e ler certos sistemas de arquivos`,`Guarda toda a configuração dele na partição <code>/boot/</code>`,`Fica armazenado em uma área especial dentro dos metadados GPT`,`É carregado a partir de uma posição fixa do disco de boot`],
+c:[0,1],
+e:`A UEFI entende tabelas de partição (GPT/MBR) e lê certos FS (FAT). É por isso que ela consegue localizar o <code>.efi</code> sem ajuda de código no MBR.`},
+
+// ---- Página 13 ----
+{t:"s",q:`Qual comando exibe o conteúdo de um arquivo tar comprimido com gzip?`,
+opts:[`<code>gzip archive.tgz | tar xvf -</code>`,`<code>tar -fzt archive.tgz</code>`,`<code>gzip -d archive.tgz | tar tvf -</code>`,`<code>tar cf archive.tgz</code>`,`<code>tar ztf archive.tgz</code>`],
+c:[4],
+e:`<code>tar ztf</code> = z (gzip), t (list), f (arquivo). Lista o conteúdo sem extrair.`},
+
+{t:"s",q:`Um módulo do kernel defeituoso está causando problemas em uma placa de rede. Qual ação garante que o módulo NÃO seja carregado automaticamente no boot?`,
+opts:[`Usar <code>lsmod --remove --autoclean</code> sem informar o nome do módulo`,`Usar <code>modinfo -k</code> seguido do nome do módulo`,`Usar <code>modprobe -r</code> seguido do nome do módulo`,`Adicionar uma linha <code>blacklist NOME</code> em <code>/etc/modprobe.d/blacklist.conf</code>`,`Deletar o diretório do módulo e recompilar o kernel`],
+c:[3],
+e:`<code>blacklist</code> nos arquivos de <code>/etc/modprobe.d/</code> impede que o módulo seja carregado automaticamente por outros módulos ou pelo udev.`},
+
+{t:"m",q:`Para que o LVM (Logical Volume Manager) pode ser usado? (Escolha três.)`,
+opts:[`Criar snapshots`,`Mudar dinamicamente o tamanho de volumes lógicos`,`Criar ou apagar volumes lógicos dinamicamente`,`Criar arrays RAID 9`,`Criptografar volumes lógicos`],
+c:[0,1,2],
+e:`LVM oferece snapshots, redimensionamento dinâmico de LVs e criação/remoção em runtime. Criptografia é feita pelo dm-crypt/LUKS; RAID 9 não existe.`},
+
+// ---- Página 14 ----
+{t:"s",q:`Considere a saída de <code>ls -i</code>:<pre>525385 -rw-rw-r-- 2 1000 1000 0 Feb 12 19:44 a.txt
+526255 lrwxrwxrwx 1 1000 1000 5 Feb 12 19:44 b.txt -&gt; a.txt</pre>Como criar um arquivo <code>c.txt</code> com o mesmo inode de <code>a.txt</code> (inode 525385)?`,
+opts:[`<code>ln -h a.txt c.txt</code>`,`<code>ln c.txt a.txt</code>`,`<code>ln a.txt c.txt</code>`,`<code>ln -f c.txt a.txt</code>`,`<code>ln -i 525385 c.txt</code>`],
+c:[2],
+e:`<code>ln FONTE DESTINO</code> cria um hard link — o novo nome aponta para o mesmo inode do arquivo original.`},
+
+{t:"m",q:`Quais ferramentas mostram o caminho completo do executável que o shell atual usaria ao invocar um comando sem caminho? (Escolha duas.)`,
+opts:[`<code>find</code>`,`<code>pwd</code>`,`<code>which</code>`,`<code>locate</code>`,`<code>type</code>`],
+c:[2,3],
+e:`Conforme o gabarito: <code>which</code> e <code>locate</code>. (Observação: <code>type</code> também mostra como o shell resolve o comando, mas foi marcado de acordo com o material fornecido.)`},
+
+{t:"m",q:`Quais comandos podem exibir o número de inode de um dado arquivo? (Escolha duas.)`,
+opts:[`<code>inode</code>`,`<code>ln</code>`,`<code>ls</code>`,`<code>cp</code>`,`<code>stat</code>`],
+c:[2,4],
+e:`<code>ls -i</code> mostra o inode ao lado do nome. <code>stat</code> exibe o inode entre outros metadados.`},
+
+// ---- Página 15 ----
+{t:"s",q:`Quantos campos existem em uma linha sintaticamente correta de <code>/etc/fstab</code>?`,
+opts:[`3`,`4`,`5`,`6`,`7`],
+c:[3],
+e:`Os 6 campos: dispositivo, ponto de montagem, tipo, opções, dump, fsck-pass.`},
+
+{t:"s",q:`Qual comando carrega um módulo do kernel junto com todas as dependências?`,
+opts:[`<code>depmod</code>`,`<code>modprobe</code>`,`<code>module_install</code>`,`<code>insmod</code>`,`<code>loadmod</code>`],
+c:[1],
+e:`<code>modprobe</code> resolve dependências (via <code>modules.dep</code>) e carrega tudo. <code>insmod</code> carrega só o arquivo apontado.`},
+
+{t:"s",q:`Qual comando pode buscar no conteúdo de arquivos usando expressões regulares?`,
+opts:[`<code>find</code>`,`<code>locate</code>`,`<code>grep</code>`,`<code>reggrep</code>`,`<code>pgrep</code>`],
+c:[2],
+e:`<code>grep</code> é a ferramenta de busca por regex em texto. <code>find</code>/<code>locate</code> buscam por nome, <code>pgrep</code> por processos.`},
+
+// ---- Página 16 ----
+{t:"m",q:`Quais as principais diferenças entre GPT e MBR quanto ao número máximo e ao tamanho de partições? (Escolha duas.)`,
+opts:[`MBR suporta partições até 4 TB, enquanto GPT vai até 128 ZB.`,`Por padrão GPT gerencia até 128 partições enquanto MBR só suporta 4 primárias.`,`Por padrão GPT gerencia até 64 partições enquanto MBR só suporta 16 primárias.`,`MBR suporta partições até 2,2 TB, enquanto GPT suporta até 9,4 ZB.`,`Tanto GPT quanto MBR suportam 4 primárias de até 4096 TB.`],
+c:[1,3],
+e:`GPT: até 128 partições por padrão e tamanho de partição na casa dos zettabytes. MBR: 4 primárias e limite prático de ~2,2 TB por partição.`},
+
+{t:"m",q:`Quais afirmações são verdadeiras sobre a sequência de boot de um PC BIOS? (Escolha duas.)`,
+opts:[`Partes do processo de boot podem ser configuradas pela BIOS`,`Linux não precisa da assistência da BIOS para dar boot`,`O boot da BIOS só começa se o armazenamento secundário estiver funcional`,`A BIOS inicia o processo de boot após ligar o computador`,`A BIOS é iniciada carregando drivers de hardware do disco`],
+c:[0,3],
+e:`A BIOS toma o controle logo após POST e é ela que decide onde carregar o próximo estágio; várias opções (ordem de boot, dispositivos) são configuráveis.`},
+
+{t:"m",q:`Quais sequências no <code>vi</code> salvam o documento e saem do editor? (Escolha duas.)`,
+opts:[`<code>Ctrl XX</code>`,`<code>Ctrl :W</code>`,`<code>Esc zz</code>`,`<code>Esc :wq</code>`,`<code>Esc ZZ</code>`],
+c:[3,4],
+e:`<code>:wq</code> escreve e sai; <code>ZZ</code> (maiúsculo) faz o mesmo em modo Normal.`},
+
+// ---- Página 17 ----
+{t:"s",q:`Qual comando redireciona a saída do <code>ls</code> para a saída de erro padrão (stderr)?`,
+opts:[`<code>ls &gt;-1</code>`,`<code>ls &lt;&lt;ERR</code>`,`<code>ls &gt;&amp;2</code>`,`<code>ls &gt;&gt;2</code>`,`<code>ls |error</code>`],
+c:[2],
+e:`<code>&gt;&amp;2</code> duplica o FD 1 (stdout) para o FD 2 (stderr).`},
+
+{t:"m",q:`Quais arquivos existem em uma instalação padrão do GRUB 2? (Escolha duas.)`,
+opts:[`<code>/boot/grub/stages/stage0</code>`,`<code>/boot/grub/i386-pc/lvm.mod</code>`,`<code>/boot/grub/fstab</code>`,`<code>/boot/grub/grub.cfg</code>`,`<code>/boot/grub/linux/vmlinuz</code>`],
+c:[1,3],
+e:`GRUB 2 usa <code>grub.cfg</code> e módulos em subdiretórios como <code>i386-pc/</code>. Não existe stage0/fstab próprios do GRUB.`},
+
+{t:"s",q:`Qual comando lista todos os pacotes atualmente instalados via RPM?`,
+opts:[`<code>yum --query --all</code>`,`<code>yum --list --installed</code>`,`<code>rpm --query --list</code>`,`<code>rpm --list --installed</code>`,`<code>rpm --query --all</code>`],
+c:[4],
+e:`<code>rpm -qa</code> (query all) lista todos os pacotes instalados no sistema.`},
+
+// ---- Página 18 ----
+{t:"t",q:`Qual comando exibe a lista de tarefas em segundo plano do shell atual? (Informe SOMENTE o comando, sem caminho ou parâmetros.)`,
+c:"jobs",
+e:`<code>jobs</code> lista os trabalhos parados ou em background do shell corrente.`},
+
+{t:"s",q:`Qual comando exibe a página de manual do comando <code>command</code> da seção 1?`,
+opts:[`<code>man command(1)</code>`,`<code>man command@1</code>`,`<code>man 1 command</code>`,`<code>man 1.command</code>`,`<code>man -s 1 command</code>`],
+c:[2],
+e:`Sintaxe padrão: <code>man SEÇÃO PÁGINA</code>. <code>man -s</code> é alternativa em alguns sistemas, mas a canônica é <code>man 1 command</code>.`},
+
+{t:"s",q:`Qual comando instala o GRUB 2 no Master Boot Record do terceiro disco?`,
+opts:[`<code>grub2 install /dev/sdc</code>`,`<code>grub-mkrescue /dev/sdc</code>`,`<code>grub-mbrinstall /dev/sdc</code>`,`<code>grub-setup /dev/sdc</code>`,`<code>grub-install /dev/sdc</code>`],
+c:[4],
+e:`<code>grub-install DEVICE</code> escreve o boot loader no MBR do disco. Terceiro disco = <code>/dev/sdc</code>.`},
+
+// ---- Página 19 ----
+{t:"s",q:`Em uma estrutura aninhada, qual opção de linha do <code>find</code> restringe a busca a um número determinado de subdiretórios abaixo?`,
+opts:[`<code>-maxdepth</code>`,`<code>-dirmax</code>`,`<code>-maxlevels</code>`,`<code>-s</code>`,`<code>-n</code>`],
+c:[0],
+e:`<code>find PATH -maxdepth N</code> limita a busca a N níveis abaixo do ponto inicial.`},
+
+{t:"s",q:`O que está contido na EFI System Partition?`,
+opts:[`O sistema de arquivos raiz do Linux`,`O bootloader de primeiro estágio (first stage boot loader)`,`O arquivo padrão de swap`,`Os binários do shell padrão do Linux`,`Os diretórios home dos usuários`],
+c:[1],
+e:`A ESP guarda os aplicativos de boot EFI (.efi), atuando como estágio inicial da inicialização em UEFI.`},
+
+{t:"s",q:`Qual comando muda o número de dias antes de um sistema ext3 em <code>/dev/sda1</code> precisar rodar um fsck completo durante o boot?`,
+opts:[`<code>tune2fs -d 200 /dev/sda1</code>`,`<code>tune2fs -i 200 /dev/sda1</code>`,`<code>tune2fs -c 200 /dev/sda1</code>`,`<code>tune2fs -n 200 /dev/sda1</code>`,`<code>tune2fs --days 200 /dev/sda1</code>`],
+c:[1],
+e:`<code>tune2fs -i N</code> define o intervalo máximo entre checagens (em dias, meses ou semanas).`},
+
+// ---- Página 20 ----
+{t:"m",q:`Quais propriedades de um sistema Linux devem ser alteradas quando uma máquina virtual é clonada? (Escolha duas.)`,
+opts:[`O esquema de particionamento`,`O sistema de arquivos`,`O D-Bus Machine ID`,`As permissões do <code>/root/</code>`,`As chaves de host do SSH`],
+c:[2,4],
+e:`Identificadores exclusivos precisam ser regenerados após clonagem para evitar colisão: <code>/etc/machine-id</code> (D-Bus) e as chaves em <code>/etc/ssh/ssh_host_*</code>.`},
+
+{t:"m",q:`Rodando <code>chmod 640 filea.txt</code> como usuário comum, as permissões não são atualizadas. Qual pode ser a razão? (Escolha duas.)`,
+opts:[`<code>filea.txt</code> pertence a outro usuário e um usuário comum não pode mudar permissões de arquivos alheios`,`<code>filea.txt</code> é um link simbólico cujas permissões são fixas e não podem ser alteradas`,`<code>filea.txt</code> tem o sticky bit setado e um usuário comum não pode remover essa permissão`,`<code>filea.txt</code> é um hard link cujas permissões são herdadas do alvo e não podem ser setadas diretamente`,`<code>filea.txt</code> tem o SetUID setado, e apenas o root pode alterar o arquivo`],
+c:[0,1],
+e:`Somente o dono (ou root) muda permissões de um arquivo. Links simbólicos têm permissões fixas 777 — <code>chmod</code> afeta o alvo.`},
+
+{t:"s",q:`No modo Normal do <code>vi</code>, qual caractere inicia uma busca reversa (para trás) no texto?`,
+opts:[`<code>r</code>`,`<code>/</code>`,`<code>F</code>`,`<code>?</code>`,`<code>s</code>`],
+c:[3],
+e:`<code>/</code> pesquisa para frente; <code>?</code> pesquisa para trás.`},
+
+// ---- Página 21 ----
+{t:"s",q:`Um repositório yum pode declarar conjuntos de pacotes relacionados. Qual comando yum instala todos os pacotes do grupo <code>admintools</code>?`,
+opts:[`<code>yum pkgsel --install admintools</code>`,`<code>yum install admintools/*</code>`,`<code>yum groupinstall admintools</code>`,`<code>yum taskinstall admintools</code>`,`<code>yum collection install admintools</code>`],
+c:[2],
+e:`<code>yum groupinstall GRUPO</code> instala todos os pacotes do grupo declarado no repositório.`},
+
+{t:"t",q:`Qual comando é usado para iniciar outro comando com um dado nível de <em>nice</em>? (Informe SOMENTE o comando, sem caminho ou parâmetros.)`,
+c:"nice",
+e:`<code>nice -n VALOR COMANDO...</code> executa o comando com uma prioridade (nice level) definida.`},
+
+{t:"s",q:`Qual é o primeiro programa que o kernel Linux inicia no boot quando usando System V init?`,
+opts:[`<code>/lib/init.so</code>`,`<code>/proc/sys/kernel/init</code>`,`<code>/etc/rc.d/rcinit</code>`,`<code>/sbin/init</code>`,`<code>/boot/init</code>`],
+c:[3],
+e:`Historicamente, o kernel executa <code>/sbin/init</code> como PID 1 em System V.`},
+
+// ---- Página 22 ----
+{t:"m",q:`Um software de backup usa hard links entre arquivos que não mudaram entre duas execuções. Quais benefícios isso traz? (Escolha duas.)`,
+opts:[`Backups antigos podem ir para mídias lentas mas ainda servir de alvo para hard links em novos backups`,`O backup é mais rápido porque hard links são operações assíncronas, adiando a cópia`,`O backup é garantidamente inalterado porque um arquivo com hard link não pode ser modificado após criado`,`O backup consome menos espaço porque os hard links apontam para o mesmo dado no disco em vez de armazenar cópias redundantes`,`O backup é mais rápido porque, em vez de copiar os dados de cada arquivo, hard links só mudam metadados do FS`],
+c:[3,4],
+e:`Hard links compartilham o mesmo inode e dados, então o backup usa menos espaço e não copia bytes de arquivos inalterados, só cria uma nova entrada de diretório.`},
+
+{t:"s",q:`Qual comando exibe o caminho do executável que seria executado ao invocar o comando <code>foo</code>?`,
+opts:[`<code>lsattr foo</code>`,`<code>apropos foo</code>`,`<code>locate foo</code>`,`<code>whatis foo</code>`,`<code>which foo</code>`],
+c:[4],
+e:`<code>which foo</code> retorna o caminho do primeiro <code>foo</code> encontrado no <code>PATH</code>.`},
+
+{t:"s",q:`Qual é a saída ao executar como usuário <code>fred</code> o comando:<pre>echo 'fred $USER'</pre>`,
+opts:[`<code>fred fred</code>`,`<code>fred /home/fred/</code>`,`<code>'fred $USER'</code>`,`<code>fred $USER</code>`,`<code>'fred fred'</code>`],
+c:[3],
+e:`Aspas simples inibem expansão de variáveis: <code>$USER</code> permanece literal na saída.`},
+
+// ---- Página 23 ----
+{t:"m",q:`Dados dois symlinks em uma config System V init:<pre>/etc/rc1.d/K01apache2
+/etc/rc2.d/S02apache2</pre>Quando os scripts referenciados são executados? (Escolha duas.)`,
+opts:[`<code>S02apache2</code> roda quando o runlevel 2 é entrado`,`<code>S02apache2</code> roda quando o runlevel 2 é deixado`,`<code>K01apache2</code> nunca é executado porque K indica serviço desativado`,`Tanto <code>S02apache2</code> quanto <code>K01apache2</code> rodam no shutdown`,`<code>K01apache2</code> roda quando o runlevel 1 é entrado`],
+c:[0,4],
+e:`Nos diretórios <code>rcN.d/</code>: links iniciados por <code>S</code> executam o script com argumento <code>start</code> ao ENTRAR no runlevel; <code>K</code> com <code>stop</code>.`},
+
+{t:"s",q:`Qual é o modo correto de definir o boot target padrão do systemd como <code>multi-user</code>?`,
+opts:[`<code>systemctl isolate multi-user.target</code>`,`<code>systemctl set-runlevel multi-user.target</code>`,`<code>systemctl set-boot multi-user.target</code>`,`<code>systemctl set-default multi-user.target</code>`,`<code>systemctl boot -p multi-user.target</code>`],
+c:[3],
+e:`<code>systemctl set-default TARGET</code> cria/atualiza o link simbólico <code>/etc/systemd/system/default.target</code>.`},
+
+{t:"s",q:`Qual comando instala todos os pacotes cujo nome termina com a string <code>foo</code>?`,
+opts:[`<code>zypper get "*foo?</code>`,`<code>zypper update "foo??</code>`,`<code>zypper force "foo*?</code>`,`<code>zypper install "*foo?</code>`,`<code>zypper add ".*foo?</code>`],
+c:[3],
+e:`<code>zypper install "*foo"</code> usa curinga glob para nomes de pacotes terminando em <code>foo</code>.`},
+
+// ---- Página 24 ----
+{t:"s",q:`No <code>vi</code>, como comandos como mover cursor ou copiar linhas podem ser aplicados a múltiplas linhas de uma vez?`,
+opts:[`Usando <code>:repeat NÚMERO COMANDO</code>`,`Especificando o número imediatamente antes do comando, como <code>41</code> ou <code>2yj</code>.`,`Selecionando as linhas afetadas com Shift + teclas de cursor antes de aplicar o comando.`,`Usando <code>:set repetition=4</code> para repetir cada comando 4 vezes.`,`Especificando o número após o comando, como <code>14</code> ou <code>yj2</code>, seguido de Escape.`],
+c:[1],
+e:`No vi/vim, um número prefixando um comando de modo Normal atua como contagem de repetições/movimentos.`},
+
+{t:"t",q:`Qual programa executa um comando em intervalos e atualiza a saída na tela? (Informe SOMENTE o comando, sem caminho ou parâmetros.)`,
+c:"watch",
+e:`<code>watch [-n SEG] COMANDO</code> reexecuta o comando e mostra o resultado a cada N segundos (padrão 2s).`},
+
+{t:"s",q:`Qual comando cria — ou, se já existir, sobrescreve — um arquivo <code>data</code> com a saída de <code>ls</code>?`,
+opts:[`<code>ls 3&gt; data</code>`,`<code>ls &gt;&amp; data</code>`,`<code>ls &gt; data</code>`,`<code>ls &gt;&gt; data</code>`,`<code>ls &gt;&gt;&gt; data</code>`],
+c:[2],
+e:`<code>&gt;</code> redireciona stdout, truncando ou criando o destino. <code>&gt;&gt;</code> anexa.`},
+
+// ---- Página 25 ----
+{t:"m",q:`Quais afirmações são corretas ao comparar contêineres Linux com máquinas virtuais tradicionais (ex.: LXC vs KVM)? (Escolha três.)`,
+opts:[`Contêineres são um método leve de virtualização em que o kernel controla o isolamento de processos e recursos.`,`Máquinas totalmente virtualizadas podem rodar qualquer SO para uma arquitetura de hardware específica dentro da VM.`,`Contêineres são completamente desacoplados do hardware do host e só usam dispositivos emulados.`,`O ambiente hóspede de máquinas totalmente virtualizadas é criado por um hypervisor que provê hardware virtual/emulado.`,`Contêineres no mesmo host podem usar SOs diferentes porque o container hypervisor cria execuções de kernel separadas.`],
+c:[0,1,3],
+e:`Contêineres compartilham o kernel do host (isolamento via namespaces/cgroups). Full virt roda kernels próprios com hardware emulado pelo hypervisor.`},
+
+{t:"s",q:`Qual expressão regular representa UMA letra maiúscula?`,
+opts:[`<code>:UPPER:</code>`,`<code>[A-Z]</code>`,`<code>!a-z</code>`,`<code>%C</code>`,`<code>{AZ}</code>`],
+c:[1],
+e:`<code>[A-Z]</code> é uma classe de caracteres que casa qualquer letra maiúscula ASCII.`},
+
+{t:"s",q:`Qual comando determina o formato de um arquivo usando um banco de definições sobre tipos comuns?`,
+opts:[`<code>type</code>`,`<code>file</code>`,`<code>magic</code>`,`<code>pmagic</code>`,`<code>hash</code>`],
+c:[1],
+e:`<code>file</code> usa a base "magic" (<code>/usr/share/file/magic</code>) para inferir o tipo por assinaturas.`},
+
+// ---- Página 26 ----
+{t:"s",q:`Qual é o valor máximo de <em>niceness</em> que um usuário comum pode atribuir a um processo com o comando <code>nice</code> ao iniciar um novo processo?`,
+opts:[`9`,`15`,`19`,`49`,`99`],
+c:[2],
+e:`O nice level vai de -20 (maior prioridade) a 19 (menor). Usuários comuns só podem aumentar o valor (piorar prioridade) até 19.`},
+
+{t:"s",q:`Qual comando seta a permissão SetUID no executável <code>/bin/foo</code>?`,
+opts:[`<code>chmod 4755 /bin/foo</code>`,`<code>chmod 1755 /bin/foo</code>`,`<code>chmod u-s /bin/foo</code>`,`<code>chmod 755+s /bin/foo</code>`,`<code>chmod 2755 /bin/foo</code>`],
+c:[0],
+e:`No modo octal, <code>4xxx</code> = SetUID, <code>2xxx</code> = SetGID, <code>1xxx</code> = sticky.`},
+
+{t:"m",q:`Quais são operadores válidos de redirecionamento de stream no Bash? (Escolha duas.)`,
+opts:[`<code>&lt;</code>`,`<code>#&gt;</code>`,`<code>%&gt;</code>`,`<code>&gt;&gt;&gt;</code>`,`<code>2&gt;&amp;1</code>`],
+c:[0,4],
+e:`<code>&lt;</code> = entrada; <code>2&gt;&amp;1</code> = redireciona stderr para o mesmo destino que stdout. Os demais não existem.`},
+
+// ---- Página 27 ----
+{t:"s",q:`O que é verdadeiro sobre o comando <code>ls &gt; files</code> se <code>files</code> não existir?`,
+opts:[`A saída do <code>ls</code> vai para o terminal`,`<code>files</code> é criado e passa a conter a saída do <code>ls</code>`,`Uma mensagem de erro é exibida e <code>ls</code> não roda`,`O comando <code>files</code> é executado e recebe a saída do <code>ls</code>`,`Qualquer saída do <code>ls</code> é descartada`],
+c:[1],
+e:`<code>&gt;</code> cria o arquivo destino se não existir e escreve a stdout do comando nele.`},
+
+{t:"s",q:`Qual é o nice level padrão de um processo iniciado com o comando <code>nice</code>?`,
+opts:[`-10`,`0`,`10`,`15`,`20`],
+c:[2],
+e:`Sem argumentos, <code>nice</code> aplica +10 acima do nice level do processo atual (que geralmente é 0).`},
+
+{t:"t",q:`Seguindo o FHS, onde binários compilados pelo administrador devem ser colocados para ficarem disponíveis a todos os usuários? (Informe o caminho COMPLETO do diretório.)`,
+c:"/usr/local/bin/",
+e:`<code>/usr/local/</code> é o ramo do FHS para software instalado localmente, mantido separado dos pacotes distribuídos.`},
+
+// ---- Página 28 ----
+{t:"s",q:`Após uma queda de energia, o sistema XFS de <code>/dev/sda3</code> ficou inconsistente. Como corrigir os erros existentes?`,
+opts:[`Usando <code>mount -f</code> para forçar a montagem`,`Rodando <code>xfsck</code> sobre o FS`,`Montando com a opção <code>xfs_repair</code>`,`Rodando <code>xfsadmin repair</code>`,`Rodando <code>xfs_repair</code> no FS`],
+c:[4],
+e:`XFS não usa <code>fsck</code>; a ferramenta de recuperação é <code>xfs_repair</code>.`},
+
+{t:"s",q:`O comando <code>dbmaint &amp;</code> foi usado, mas <code>dbmaint</code> é encerrado ao usuário fazer logout. Qual invocação alternativa mantém <code>dbmaint</code> rodando mesmo depois do logout?`,
+opts:[`<code>job -b dbmaint</code>`,`<code>dbmaint &amp;&gt;/dev/pts/null</code>`,`<code>nohup dbmaint &amp;</code>`,`<code>bg dbmaint</code>`,`<code>wait dbmaint</code>`],
+c:[2],
+e:`<code>nohup</code> desassocia o processo do terminal (imune ao SIGHUP enviado no logout).`},
+
+{t:"s",q:`No Bash, inserir <code>1&gt;&amp;2</code> após um comando redireciona…`,
+opts:[`…a saída de erro padrão para a entrada padrão.`,`…a saída padrão para a saída de erro padrão.`,`…a entrada padrão para a saída de erro padrão.`,`…a saída de erro padrão para a saída padrão.`,`…a saída padrão para a entrada padrão.`],
+c:[1],
+e:`<code>1&gt;&amp;2</code> = redireciona o FD 1 (stdout) para onde apontar o FD 2 (stderr).`},
+
+// ---- Página 29 ----
+{t:"s",q:`Dado o fluxo:<pre>txt1.txt
+atxt.txt
+txtB.txt</pre>Qual regex transforma esse fluxo em:<pre>txt1.bak.txt
+atxt.bak.txt
+txtB.bak.txt</pre>`,
+opts:[`<code>s/^.txt/.bak/</code>`,`<code>s/txt/bak.txt/</code>`,`<code>s/txt$/bak.txt/</code>`,`<code>s/^txt$/.bak^/</code>`,`<code>s/[.txt]/.bak$1/</code>`],
+c:[2],
+e:`<code>txt$</code> casa "txt" no fim da string; substitui por <code>bak.txt</code>, gerando <code>...bak.txt</code>.`},
+
+{t:"t",q:`Qual comando mostra o uso atual de disco para todos os sistemas de arquivos montados? (Informe SOMENTE o comando, sem caminho ou parâmetros.)`,
+c:"df",
+e:`<code>df</code> (disk free) mostra espaço livre/usado por FS montado.`},
+
+{t:"s",q:`Se o arquivo tar gzip <code>texts.tgz</code> contém <code>a.txt</code> e <code>b.txt</code>, quais arquivos estarão presentes no diretório atual após <code>gunzip texts.tgz</code>?`,
+opts:[`Apenas <code>a.txt</code>, <code>b.txt</code> e <code>texts.tgz</code>`,`Apenas <code>texts.tar</code> e <code>texts.tgz</code>`,`Apenas <code>a.txt.gz</code> e <code>b.txt.gz</code>`,`Apenas <code>a.txt</code> e <code>b.txt</code>`,`Apenas <code>texts.tar</code>`],
+c:[4],
+e:`<code>gunzip</code> descomprime, gerando <code>texts.tar</code> e removendo o <code>.tgz</code>. Só o <code>tar xf</code> extrai os arquivos internos.`},
+
+// ---- Página 30 ----
+{t:"s",q:`Qual comando exibe a saída do comando <code>foo</code> na tela E grava em um arquivo <code>/tmp/foodata</code>?`,
+opts:[`<code>foo | less /tmp/foodata</code>`,`<code>foo | cp /tmp/foodata</code>`,`<code>foo &gt; /tmp/foodata</code>`,`<code>foo | tee /tmp/foodata</code>`,`<code>foo &gt; stdout &gt;&gt; /tmp/foodata</code>`],
+c:[3],
+e:`<code>tee</code> lê stdin e escreve tanto em stdout quanto no arquivo dado.`},
+
+{t:"s",q:`Qual a saída ao aplicar a regex <code>s/[ABC][abc]/xx/</code> à string <code>ABCabc</code>?`,
+opts:[`<code>ABxxbc</code>`,`<code>xxCxxc</code>`,`<code>xxxxxx</code>`,`<code>ABCabc</code>`,`<code>Axxaxx</code>`],
+c:[0],
+e:`Sem flag <code>g</code>, só a primeira ocorrência é trocada. <code>Ca</code> (uma maiúscula + minúscula consecutivas) casa e vira <code>xx</code>: <code>AB[Ca]bc → ABxxbc</code>.`},
+
+{t:"s",q:`Qual sinal é enviado ao pressionar <code>Ctrl+C</code>?`,
+opts:[`<code>SIGTERM</code>`,`<code>SIGCONT</code>`,`<code>SIGSTOP</code>`,`<code>SIGKILL</code>`,`<code>SIGINT</code>`],
+c:[4],
+e:`<code>Ctrl+C</code> envia <code>SIGINT</code> ao processo em foreground para pedir interrupção.`},
+
+// ---- Página 31 ----
+{t:"s",q:`Considerando o uso de hard links, qual é uma razão válida para NÃO usá-los?`,
+opts:[`Hard links não estão disponíveis em todos os sistemas Linux porque FS tradicionais como ext4 não os suportam`,`Cada hard link tem dono, permissões e ACLs individuais, o que pode expor conteúdo`,`Hard links são específicos de um FS e não podem apontar para arquivos em outro FS`,`Se usuários que não sejam root precisarem criar hard links, é preciso instalar e configurar o <code>suln</code>`,`Quando um arquivo com hard link muda, uma cópia é criada consumindo espaço extra`],
+c:[2],
+e:`Um hard link é apenas uma entrada de diretório apontando para um inode; inodes vivem dentro de um único FS.`},
+
+{t:"s",q:`Qual afirmação é correta para um comando terminado com <code>&amp;</code>?`,
+opts:[`A saída do comando é redirecionada para <code>/dev/null</code>.`,`O comando roda em background no shell atual.`,`A saída do comando é executada pelo shell.`,`O comando roda como filho direto do processo <code>init</code>.`,`A entrada do comando é lida de <code>/dev/null</code>.`],
+c:[1],
+e:`<code>cmd &amp;</code> lança o comando em background retornando imediatamente o controle ao shell.`},
+
+{t:"s",q:`Qual tipo de partição é usada para áreas de swap no Linux?`,
+opts:[`<code>7</code>`,`<code>82</code>`,`<code>83</code>`,`<code>8e</code>`,`<code>fd</code>`],
+c:[1],
+e:`<code>0x82</code> é o código MBR de partição de swap Linux; <code>0x83</code> = Linux nativa, <code>0x8e</code> = LVM, <code>0xfd</code> = RAID.`},
+
+// ---- Página 32 ----
+{t:"s",q:`Ao redirecionar a saída do <code>find</code> para o <code>xargs</code>, qual opção do <code>find</code> ajuda quando os nomes contêm espaços?`,
+opts:[`<code>-rep-space</code>`,`<code>-printnul</code>`,`<code>-nospace</code>`,`<code>-ignore-space</code>`,`<code>-print0</code>`],
+c:[4],
+e:`<code>-print0</code> separa os nomes por byte NUL, aceito por <code>xargs -0</code>, evitando problemas com espaços/quebras.`},
+
+{t:"s",q:`O que o comando <code>mount --bind</code> faz?`,
+opts:[`Torna o conteúdo de um diretório disponível em outro diretório`,`Monta todos os FS disponíveis no diretório atual`,`Monta todos os FS montáveis por usuário no home dele`,`Monta todos os FS listados em <code>/etc/fstab</code> que tenham <code>userbind</code>`,`Monta permanentemente um arquivo comum como se fosse um diretório`],
+c:[0],
+e:`<code>mount --bind ORIGEM DESTINO</code> replica a árvore de <code>ORIGEM</code> em <code>DESTINO</code>.`},
+
+{t:"s",q:`Qual comando mostra como o shell trata um dado comando (alias, built-in, executável...)?`,
+opts:[`<code>where</code>`,`<code>type</code>`,`<code>stat</code>`,`<code>case</code>`,`<code>fileinfo</code>`],
+c:[1],
+e:`<code>type NOME</code> revela se é built-in, alias, função ou binário no PATH.`},
+
+// ---- Página 33 ----
+{t:"m",q:`Em um Bash, quais comandos executam diretamente as instruções do arquivo <code>/usr/local/bin/runme.sh</code> SEM iniciar um subshell? (Escolha duas.)`,
+opts:[`<code>source /usr/local/bin/runme.sh</code>`,`<code>/usr/local/bin/runme.sh</code>`,`<code>/bin/bash /usr/local/bin/runme.sh</code>`,`<code>. /usr/local/bin/runme.sh</code>`,`<code>run /usr/local/bin/runme.sh</code>`],
+c:[0,3],
+e:`<code>source</code> e o operador ponto (<code>.</code>) fazem "dot-sourcing" — executam o script no shell atual.`},
+
+{t:"s",q:`Qual comando gera uma lista de usuários com o shell de login a partir de <code>/etc/passwd</code>?`,
+opts:[`<code>column -s : 1,7 /etc/passwd</code>`,`<code>chop -c 1,7 /etc/passwd</code>`,`<code>colrm 1,7 /etc/passwd</code>`,`<code>sort -t: -k1,7 /etc/passwd</code>`,`<code>cut -d: -f1,7 /etc/passwd</code>`],
+c:[4],
+e:`<code>cut -d: -f1,7</code> pega os campos 1 (login) e 7 (shell) delimitados por <code>:</code>.`},
+
+{t:"s",q:`Dado o log <code>loga.log</code> com timestamps <code>DD/MM/YYYY:hh:mm:ss</code>, qual comando filtra as entradas entre 8:00 e 8:59?`,
+opts:[`<code>grep -E ':08:[09]+:[09]+' loga.log</code>`,`<code>grep -E ':08:[00]+' loga.log</code>`,`<code>grep -E loga.log ':08:[0-9]+:[0-9]+'</code>`,`<code>grep loga.log ':08:[0-9]:[0-9]'</code>`,`<code>grep -E ':08:[0-9]+:[0-9]+' loga.log</code>`],
+c:[4],
+e:`<code>[0-9]+</code> casa 1+ dígitos; o padrão <code>:08:MM:SS</code> corresponde à faixa das 8:00–8:59.`},
+
+// ---- Página 34 ----
+{t:"s",q:`Qual valor de umask garante que novos diretórios sejam legíveis/graváveis/listáveis pelo dono, legíveis/listáveis pelo grupo, e inacessíveis a outros?`,
+opts:[`<code>0750</code>`,`<code>0027</code>`,`<code>0036</code>`,`<code>7640</code>`,`<code>0029</code>`],
+c:[1],
+e:`Diretórios são criados com base <code>777</code>. <code>777 & ~027 = 750</code>, exatamente <code>rwxr-x---</code>.`},
+
+{t:"t",q:`Qual comando muda a prioridade de um processo já em execução? (Informe SOMENTE o comando, sem caminho ou parâmetros.)`,
+c:"renice",
+e:`<code>renice</code> ajusta o nice level de processos existentes por PID/usuário/grupo.`},
+
+{t:"t",q:`Qual programa atualiza a base usada pelo comando <code>locate</code>? (Informe SOMENTE o comando, sem caminho ou parâmetros.)`,
+c:"updatedb",
+e:`<code>updatedb</code> percorre o sistema e regenera <code>/var/lib/mlocate/mlocate.db</code>.`},
+
+// ---- Página 35 ----
+{t:"s",q:`Qual tipo de FS o <code>mkfs</code> cria quando executado apenas com o nome do dispositivo, sem outros parâmetros?`,
+opts:[`XFS`,`VFAT`,`<code>ext2</code>`,`<code>ext3</code>`,`<code>ext4</code>`],
+c:[2],
+e:`Historicamente <code>mkfs</code> chamava <code>mkfs.ext2</code> como fallback quando o tipo não era passado.`},
+
+{t:"s",q:`Qual é o percentual padrão de espaço reservado para o root em novos sistemas ext4?`,
+opts:[`10%`,`3%`,`15%`,`0%`,`5%`],
+c:[4],
+e:`Ext4 reserva 5% dos blocos para o root, evitando que serviços fiquem sem espaço em casos extremos.`},
+
+{t:"m",q:`Quais comandos imprimem o diretório de trabalho atual em Bash? (Escolha duas.)`,
+opts:[`<code>echo "\${PWD}"</code>`,`<code>echo "\${WD}"</code>`,`<code>printwd</code>`,`<code>pwd</code>`,`<code>echo "\${pwd}"</code>`],
+c:[0,3],
+e:`<code>pwd</code> é o comando padrão; a variável <code>$PWD</code> é mantida pelo shell com o mesmo caminho.`},
+
+// ---- Página 36 ----
+{t:"s",q:`Qual comando deve ser digitado antes de sair do <code>vi</code> para salvar o arquivo como <code>filea.txt</code>?`,
+opts:[`<code>%s filea.txt</code>`,`<code>%w filea.txt</code>`,`<code>:save filea.txt</code>`,`<code>:w filea.txt</code>`,`<code>:s filea.txt</code>`],
+c:[3],
+e:`<code>:w NOMEARQUIVO</code> grava o buffer atual no nome informado.`},
+
+{t:"s",q:`Qual comando lê um arquivo e cria pedaços (chunks) separados de um tamanho dado?`,
+opts:[`<code>ar</code>`,`<code>cat</code>`,`<code>break</code>`,`<code>split</code>`,`<code>parted</code>`],
+c:[3],
+e:`<code>split -b TAMANHO arquivo prefixo</code> corta o arquivo em partes do tamanho definido.`},
+
+{t:"s",q:`Ao bootar do disco, o sistema carrega o kernel e initramfs mas trava nas tarefas seguintes. O sistema é iniciado com um CD de resgate para investigar. Qual método ajuda a identificar a causa raiz?`,
+opts:[`Usar <code>dmesg</code> a partir do shell do CD para ver o boot log original.`,`Investigar <code>/proc/kmsg</code> no HD para possíveis erros.`,`Investigar <code>/var/log</code> no HD para possíveis erros.`,`Usar <code>chroot</code> no FS do HD e ver logs com <code>dmesg</code>.`,`Reiniciar do HD já que o sistema deu boot pelo CD.`],
+c:[2],
+e:`Logs de serviços (syslog, journal em texto) estão em <code>/var/log/</code> do HD. <code>dmesg</code> mostra somente o boot da sessão atual.`},
+
+// ---- Página 37 ----
+{t:"s",q:`Qual arquivo define as fontes de rede de onde o gerenciador de pacotes Debian baixa softwares?`,
+opts:[`<code>/etc/dpkg/dpkg.cfg</code>`,`<code>/etc/apt/apt.conf.d</code>`,`<code>/etc/apt/apt.conf</code>`,`<code>/etc/dpkg/dselect.cfg</code>`,`<code>/etc/apt/sources.list</code>`],
+c:[4],
+e:`As URLs dos repositórios ficam em <code>/etc/apt/sources.list</code> (e em <code>sources.list.d/*.list</code>).`},
+
+{t:"s",q:`Qual comando instala os arquivos de boot do GRUB nos FS ativos e o bootloader na primeira partição do primeiro disco?`,
+opts:[`<code>grub-install /dev/sda</code>`,`<code>grub-install /dev/sda1</code>`,`<code>grub-install current /dev/sda0</code>`,`<code>grub-install /dev/sda0</code>`,`<code>grub-install current /dev/sda1</code>`],
+c:[1],
+e:`<code>/dev/sda1</code> = primeira partição do primeiro disco.`},
+
+{t:"t",q:`Qual arquivo do FS <code>/proc</code> contém a lista dos dispositivos atualmente montados? (Informe o caminho COMPLETO.)`,
+c:"/proc/mounts",
+e:`<code>/proc/mounts</code> (ou <code>/proc/self/mounts</code>) reflete a tabela de mounts do kernel em tempo real.`},
+
+// ---- Página 38 ----
+{t:"s",q:`A instalação de um pacote Debian local falhou por dependências não satisfeitas. Qual comando instala as dependências faltantes e conclui a instalação interrompida?`,
+opts:[`<code>dpkg --fix --all</code>`,`<code>apt-get autoinstall</code>`,`<code>dpkg-reconfigure --all</code>`,`<code>apt-get all</code>`,`<code>apt-get install -f</code>`],
+c:[4],
+e:`<code>apt-get install -f</code> ("fix broken") tenta resolver dependências pendentes.`},
+
+{t:"m",q:`Em um Linux 64 bits, quais diretórios tipicamente contêm bibliotecas compartilhadas? (Escolha duas.)`,
+opts:[`<code>~/.lib64/</code>`,`<code>/usr/lib64/</code>`,`<code>/var/lib64/</code>`,`<code>/lib64/</code>`,`<code>/opt/lib64/</code>`],
+c:[1,3],
+e:`Em distros 64 bits, bibliotecas essenciais ficam em <code>/lib64/</code> e <code>/usr/lib64/</code>.`},
+
+{t:"m",q:`Quais arquivos são encontrados no sistema de arquivos <code>/boot/</code>? (Escolha duas.)`,
+opts:[`Imagens do kernel Linux`,`Binários do shell Bash`,`Unidades de target e service do systemd`,`Imagens do initial ramdisk`,`Binários do <code>fsck</code>`],
+c:[0,3],
+e:`<code>/boot/</code> contém <code>vmlinuz-*</code> (kernel) e <code>initrd</code>/<code>initramfs-*</code> (ramdisk inicial), além de dados do bootloader.`},
+
+// ---- Página 39 ----
+{t:"s",q:`Qual comando imprime uma lista de nomes de usuário (1ª coluna) e o grupo primário (4ª coluna) do <code>/etc/passwd</code>?`,
+opts:[`<code>fmt -f 1,4 /etc/passwd</code>`,`<code>cut -d: -f 1,4 /etc/passwd</code>`,`<code>sort -t: -k 1,4 /etc/passwd</code>`,`<code>paste -f 1,4 /etc/passwd</code>`,`<code>split -c 1,4 /etc/passwd</code>`],
+c:[1],
+e:`<code>cut -d: -f 1,4</code> extrai os campos 1 (usuário) e 4 (GID).`},
+
+{t:"m",q:`Quais FS Linux pré-alocam um número fixo de inodes ao serem criados, em vez de gerá-los conforme necessário? (Escolha duas.)`,
+opts:[`JFS`,`<code>ext3</code>`,`XFS`,`<code>ext2</code>`,`<code>procfs</code>`],
+c:[1,3],
+e:`As famílias <code>ext2</code>/<code>ext3</code>/<code>ext4</code> definem a quantidade total de inodes na criação. XFS e JFS alocam inodes dinamicamente.`},
+
+{t:"s",q:`Qual comando produz a saída <code>test</code> para o shell?`,
+opts:[`<code>cat &lt;!EOT<br>test<br>EOT</code>`,`<code>cat &lt;|EOT<br>test<br>EOT</code>`,`<code>cat !&lt;EOT<br>test<br>EOT</code>`,`<code>cat &amp;&lt;EOT<br>test<br>EOT</code>`,`<code>cat &lt;&lt;EOT<br>test<br>EOT</code>`],
+c:[4],
+e:`<code>&lt;&lt;DELIM</code> é o operador here-document do Bash — envia as próximas linhas até o delimitador como stdin do comando.`},
+
+// ---- Página 40 ----
+{t:"s",q:`Qual comando lista as dependências do arquivo de pacote RPM <code>foo.rpm</code>?`,
+opts:[`<code>rpm -qpR foo.rpm</code>`,`<code>rpm -dep foo</code>`,`<code>rpm -ld foo.rpm</code>`,`<code>rpm -R foo.rpm</code>`,`<code>rpm -pD foo</code>`],
+c:[0],
+e:`<code>-q</code>=query, <code>-p</code>=arquivo de pacote em disco, <code>-R</code>=requires (dependências).`},
+
+{t:"m",q:`Quais comandos são válidos no arquivo de configuração do GRUB 2? (Escolha duas.)`,
+opts:[`<code>menuentry</code>`,`<code>uefi</code>`,`<code>pxe-ifconfig</code>`,`<code>insmod</code>`,`<code>kpartx</code>`],
+c:[0,3],
+e:`<code>menuentry</code> declara uma entrada do menu do GRUB; <code>insmod</code> carrega módulos GRUB (ex.: para ler certos FS).`},
+
+{t:"m",q:`Quais afirmações estão corretas sobre o initial RAM disk envolvido no boot do Linux? (Escolha duas.)`,
+opts:[`Um initramfs é um arquivo de FS comprimido que pode ser desempacotado para inspeção.`,`Um initramfs contém MBR, bootloader e kernel Linux.`,`Após um boot bem-sucedido, o conteúdo do initramfs fica em <code>/run/initramfs/</code>.`,`O kernel usa o initramfs temporariamente antes de acessar o FS raiz real.`,`Um initramfs não depende da versão específica do kernel e não muda após instalação inicial.`],
+c:[0,3],
+e:`O initramfs é um cpio comprimido usado pelo kernel apenas até que os drivers necessários carreguem o FS raiz real. Pode ser desmontado com <code>lsinitramfs</code>/<code>unmkinitramfs</code>.`}
+];
+
+// ============================================================
+//  Motor do quiz
+// ============================================================
+const KEY="lpic101_state_v2";
+const TOTAL=Q.length;
+let multiSel=new Set();
+const state=load()||{phase:"menu",size:0,order:[],i:0,answered:{},ok:0,err:0};
+
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
+function load(){try{const s=localStorage.getItem(KEY);return s?JSON.parse(s):null}catch(e){return null}}
+
+function pickRandomN(n){
+ // Fisher–Yates parcial: escolhe n índices distintos entre 0..TOTAL-1
+ const pool=Array.from({length:TOTAL},(_,i)=>i);
+ for(let i=0;i<n && i<pool.length;i++){
+  const j=i+Math.floor(Math.random()*(pool.length-i));
+  [pool[i],pool[j]]=[pool[j],pool[i]];
+ }
+ return pool.slice(0,Math.min(n,TOTAL));
+}
+function startSession(n){
+ n=Math.max(1,Math.min(TOTAL,n|0));
+ state.phase="quiz";
+ state.size=n;
+ state.order=pickRandomN(n);
+ state.i=0;
+ state.answered={};
+ state.ok=0;
+ state.err=0;
+ multiSel.clear();
+ save();render();
+}
+function goMenu(){
+ const ans=Object.keys(state.answered).length;
+ if(state.phase==="quiz" && ans>0 && !confirm("Sair do simulado atual? Seu progresso deste simulado será perdido."))return;
+ state.phase="menu";
+ state.order=[];state.i=0;state.answered={};state.ok=0;state.err=0;state.size=0;
+ multiSel.clear();
+ save();render();
+}
+function reset(){if(!confirm("Zerar todo o progresso e voltar ao menu?"))return;localStorage.removeItem(KEY);location.reload()}
+
+function updateStats(){
+ const ans=Object.keys(state.answered).length;
+ const size=state.size||0;
+ const pct=ans?Math.round(state.ok*100/ans):0;
+ const stats=document.getElementById("stats"),progWrap=document.getElementById("progresswrap"),sub=document.getElementById("subtitle");
+ if(state.phase==="menu"){
+  stats.style.display="none";progWrap.style.display="none";
+  sub.textContent="Escolha o tamanho do simulado para começar";
+ }else{
+  stats.style.display="flex";progWrap.style.display="block";
+  sub.textContent=`Simulado de ${size} questões · Feedback imediato após cada resposta`;
+  document.getElementById("s-ans").textContent=ans;
+  document.getElementById("s-ok").textContent=state.ok;
+  document.getElementById("s-err").textContent=state.err;
+  document.getElementById("s-pct").textContent=pct+"%";
+  document.getElementById("s-rem").textContent=Math.max(0,size-ans);
+  document.getElementById("pbar").style.width=(size?ans*100/size:0)+"%";
+ }
+}
+
+function render(){
+ updateStats();
+ const main=document.getElementById("main");
+ if(state.phase==="menu"){renderMenu(main);return}
+ if(state.i>=state.order.length){renderFinished(main);return}
+ const qi=state.order[state.i];
+ const q=Q[qi];
+ const already=state.answered[qi];
+ const tipo=q.t==="s"?"única":q.t==="m"?"múltipla":"texto";
+ const cls=q.t==="m"?"multi":(q.t==="t"?"text":"");
+ let html=`<div class="qnum"><span>Questão ${state.i+1} de ${state.order.length} · Original #${qi+1}</span><span class="qtype ${cls}">${tipo}</span></div>`;
+ html+=`<div class="qtext">${q.q||q.question||""}</div>`;
+ if(q.t==="t"){
+  html+=`<input type="text" id="txtin" class="text-input" placeholder="Digite sua resposta e pressione Enter" autocomplete="off">`;
+ }else{
+  html+=`<div class="alts">`;
+  q.opts.forEach((op,idx)=>{
+   const letter=String.fromCharCode(65+idx);
+   html+=`<button class="alt" data-i="${idx}" onclick="pick(${idx})"><span class="letter">${letter}</span><span>${op}</span></button>`;
+  });
+  html+=`</div>`;
+  if(q.t==="m")html+=`<p class="hint" style="margin-top:10px">Selecione ${q.c.length} respostas e depois clique em "Confirmar".</p>`;
+ }
+ html+=`<div class="feedback" id="fb" style="display:none"></div>`;
+ html+=`<div class="actions">`;
+ if(q.t==="m"&&!already)html+=`<button class="btn btn-primary" id="btn-confirm" onclick="confirmMulti()" disabled>Confirmar</button>`;
+ if(q.t==="t")html+=`<button class="btn btn-primary" onclick="submitText()">Confirmar</button>`;
+ html+=`<button class="btn btn-secondary" onclick="prev()" ${state.i===0?"disabled":""}>← Anterior</button>`;
+ html+=`<button class="btn btn-secondary" id="btn-next" onclick="next()" ${already?"":"disabled"}>Próxima →</button>`;
+ html+=`<button class="btn btn-danger" onclick="reset()" style="margin-left:auto">Zerar</button>`;
+ html+=`</div>`;
+ main.innerHTML=html;
+ if(already)restoreAnswered(qi);
+ if(q.t==="t"){const inp=document.getElementById("txtin");inp.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();submitText()}});setTimeout(()=>inp.focus(),50)}
+}
+
+function pick(idx){
+ const qi=state.order[state.i];const q=Q[qi];
+ if(state.answered[qi])return;
+ if(q.t==="s"){
+  markAnswer(qi,[idx]);
+ }else{
+  const btn=document.querySelector(`.alt[data-i="${idx}"]`);
+  if(multiSel.has(idx)){multiSel.delete(idx);btn.classList.remove("selected")}
+  else{multiSel.add(idx);btn.classList.add("selected")}
+  document.getElementById("btn-confirm").disabled=multiSel.size!==q.c.length;
+ }
+}
+function confirmMulti(){
+ const qi=state.order[state.i];
+ markAnswer(qi,[...multiSel].sort((a,b)=>a-b));
+ multiSel.clear();
+}
+function submitText(){
+ const qi=state.order[state.i];const q=Q[qi];
+ if(state.answered[qi])return;
+ const inp=document.getElementById("txtin");
+ const val=(inp.value||"").trim();
+ if(!val)return;
+ markAnswer(qi,val);
+}
+
+function markAnswer(qi,ans){
+ const q=Q[qi];
+ let correct=false;
+ if(q.t==="t"){
+  const gold=(q.c||"").trim().toLowerCase();
+  const got=(""+ans).trim().toLowerCase();
+  correct=(got===gold)||(got===gold.replace(/\/$/,""))||(got+"/"===gold);
+  const inp=document.getElementById("txtin");inp.disabled=true;inp.classList.add(correct?"correct":"wrong");
+ }else{
+  const gold=q.c.slice().sort((a,b)=>a-b);
+  correct=(ans.length===gold.length)&&ans.every((v,i)=>v===gold[i]);
+  document.querySelectorAll(".alt").forEach(b=>b.disabled=true);
+  q.c.forEach(i=>{const b=document.querySelector(`.alt[data-i="${i}"]`);if(b)b.classList.add("correct");b&&b.classList.remove("selected")});
+  ans.forEach(i=>{if(!q.c.includes(i)){const b=document.querySelector(`.alt[data-i="${i}"]`);if(b)b.classList.add("wrong");}});
+  const cbtn=document.getElementById("btn-confirm");if(cbtn)cbtn.style.display="none";
+ }
+ state.answered[qi]={ans,correct};
+ if(correct)state.ok++;else state.err++;
+ showFeedback(qi,correct);
+ document.getElementById("btn-next").disabled=false;
+ updateStats();save();
+}
+
+function showFeedback(qi,correct){
+ const q=Q[qi];const fb=document.getElementById("fb");
+ let ansTxt="";
+ if(q.t==="t")ansTxt=`Resposta correta: <code>${q.c}</code>`;
+ else{
+  const letters=q.c.map(i=>String.fromCharCode(65+i)).join(", ");
+  ansTxt=`Resposta correta: <b>${letters}</b>`;
+ }
+ fb.className="feedback "+(correct?"ok":"err");
+ fb.innerHTML=`<h3>${correct?"✓ Correto!":"✗ Incorreto."}</h3>${ansTxt}<br><br>${q.e||""}`;
+ fb.style.display="block";
+}
+
+function restoreAnswered(qi){
+ const q=Q[qi];const rec=state.answered[qi];
+ if(q.t==="t"){
+  const inp=document.getElementById("txtin");inp.value=(""+rec.ans);inp.disabled=true;inp.classList.add(rec.correct?"correct":"wrong");
+ }else{
+  document.querySelectorAll(".alt").forEach(b=>b.disabled=true);
+  q.c.forEach(i=>{const b=document.querySelector(`.alt[data-i="${i}"]`);if(b)b.classList.add("correct")});
+  (rec.ans||[]).forEach(i=>{if(!q.c.includes(i)){const b=document.querySelector(`.alt[data-i="${i}"]`);if(b)b.classList.add("wrong")}});
+  const cbtn=document.getElementById("btn-confirm");if(cbtn)cbtn.style.display="none";
+ }
+ showFeedback(qi,rec.correct);
+}
+
+function next(){if(state.i<state.order.length-1){state.i++;multiSel.clear();save();render()}else{state.i++;save();render()}}
+function prev(){if(state.i>0){state.i--;multiSel.clear();save();render()}}
+
+function renderMenu(main){
+ const sizes=[10,20,30,60,TOTAL];
+ const labels={10:"Rápido",20:"Curto",30:"Padrão",60:"Longo",[TOTAL]:"Simulado completo"};
+ const cards=sizes.map(n=>`<button class="menu-opt" onclick="startSession(${n})">
+   <b>${n}</b>questões
+   <small>${labels[n]||""}</small>
+  </button>`).join("");
+ main.innerHTML=`<div class="menu">
+  <h2>🎯 Escolha o tamanho do simulado</h2>
+  <p>As questões são sorteadas aleatoriamente das <b>${TOTAL}</b> disponíveis do LPIC-101. Cada simulado é independente, e ao final você pode gerar o relatório dos erros pra estudar só o que faltou.</p>
+  <div class="menu-grid">${cards}</div>
+  <div class="menu-custom">
+   <label for="custom-n">Ou defina sua quantidade:</label>
+   <input type="number" id="custom-n" min="1" max="${TOTAL}" value="25" onkeydown="if(event.key==='Enter'){startCustom()}">
+   <button class="btn btn-primary" onclick="startCustom()">Começar</button>
+  </div>
+  <div class="menu-tip">💡 <b>Dica:</b> use <b>20 ou 30</b> em sessões de estudo diário. Faça o simulado, veja o relatório de erros, revise os pontos fracos e refaça. Simulados de <b>60+</b> imitam melhor o clima da prova real.</div>
+ </div>`;
+}
+function startCustom(){
+ const inp=document.getElementById("custom-n");
+ const n=parseInt(inp.value,10);
+ if(!n||n<1){inp.focus();return}
+ startSession(Math.min(n,TOTAL));
+}
+
+function renderFinished(main){
+ const ans=Object.keys(state.answered).length;
+ const pct=ans?Math.round(state.ok*100/ans):0;
+ const nivel=pct>=80?{txt:"🎉 Excelente!",cor:"#22c55e"}:pct>=60?{txt:"👍 Bom progresso",cor:"#0ea5e9"}:pct>=40?{txt:"📚 Continue estudando",cor:"#f59e0b"}:{txt:"⚠ Foque nos erros",cor:"#dc2626"};
+ main.innerHTML=`<div class="finished">
+  <h2 style="color:${nivel.cor}">${nivel.txt}</h2>
+  <p>Você respondeu <b>${ans}</b> de <b>${state.size}</b> questões do simulado.</p>
+  <p>Acertos: <b>${state.ok}</b> · Erros: <b>${state.err}</b> · Aproveitamento: <b>${pct}%</b></p>
+  <div class="actions">
+   <button class="btn btn-primary" onclick="openReport()" style="background:#f59e0b;color:#1f2937">📋 Ver relatório dos erros</button>
+   <button class="btn btn-primary" onclick="copyClaudePrompt()" style="background:#a855f7">🤖 Copiar prompt p/ Claude analisar</button>
+   <button class="btn btn-secondary" onclick="downloadReport()">⬇ Baixar relatório</button>
+   <button class="btn btn-secondary" onclick="state.i=0;save();render()">🔍 Revisar questões</button>
+   <button class="btn btn-primary" onclick="goMenu()">🔄 Novo simulado</button>
+   <button class="btn btn-danger" onclick="reset()">Zerar tudo</button>
+  </div>
+ </div>`;
+}
+
+// ============================================================
+//  Relatório de erros — HTML autônomo, imprimível e baixável
+// ============================================================
+function buildReportHTML(){
+ const wrong=[];
+ Object.keys(state.answered).forEach(k=>{
+  const rec=state.answered[k];
+  if(!rec.correct)wrong.push({qi:+k,rec});
+ });
+ wrong.sort((a,b)=>a.qi-b.qi);
+ const ans=Object.keys(state.answered).length;
+ const pct=ans?Math.round(state.ok*100/ans):0;
+ const dt=new Date().toLocaleString("pt-BR");
+ let body="";
+ if(wrong.length===0){
+  body=`<div class="empty"><h2>🎉 Nenhum erro registrado!</h2><p>Você não errou nenhuma das ${ans} questões respondidas até agora. Continue assim!</p></div>`;
+ }else{
+  body=wrong.map((w,idx)=>{
+   const q=Q[w.qi];
+   let sua="",gab="";
+   if(q.t==="t"){
+    sua=`<code>${escapeHTML(""+w.rec.ans)}</code>`;
+    gab=`<code>${escapeHTML(q.c)}</code>`;
+   }else{
+    const letters=i=>String.fromCharCode(65+i);
+    sua=(w.rec.ans||[]).map(i=>`<b>${letters(i)}</b> — ${q.opts[i]}`).join("<br>")||"<i>(sem resposta)</i>";
+    gab=q.c.map(i=>`<b>${letters(i)}</b> — ${q.opts[i]}`).join("<br>");
+   }
+   return `<article class="q">
+    <h3>Erro ${idx+1} · Questão original #${w.qi+1}</h3>
+    <div class="qtext">${q.q}</div>
+    <div class="row wrong"><span class="tag">Sua resposta</span><div>${sua}</div></div>
+    <div class="row ok"><span class="tag">Resposta correta</span><div>${gab}</div></div>
+    <div class="row exp"><span class="tag">Explicação</span><div>${q.e||""}</div></div>
+   </article>`;
+  }).join("");
+ }
+ return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Relatório de erros — LPIC-101</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"Segoe UI",Roboto,sans-serif;background:#f8fafc;color:#0f172a;padding:24px;line-height:1.55}
+.wrap{max-width:900px;margin:0 auto}
+header{background:linear-gradient(135deg,#0ea5e9,#6366f1);color:#fff;padding:24px;border-radius:12px;margin-bottom:20px}
+h1{font-size:22px;margin-bottom:6px}
+.sub{opacity:.9;font-size:14px}
+.summary{display:flex;gap:12px;margin-top:16px;flex-wrap:wrap}
+.summary div{background:rgba(255,255,255,.18);padding:8px 14px;border-radius:8px;font-size:13px}
+.summary b{font-size:18px;display:block}
+.actions{margin-bottom:20px;display:flex;gap:8px;flex-wrap:wrap}
+.btn{padding:10px 18px;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;font-family:inherit}
+.btn-p{background:#0ea5e9;color:#fff}
+.btn-s{background:#e2e8f0;color:#0f172a}
+.q{background:#fff;border-radius:12px;padding:22px;margin-bottom:18px;box-shadow:0 1px 3px rgba(0,0,0,.08);page-break-inside:avoid}
+.q h3{font-size:13px;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;font-weight:700}
+.qtext{font-size:16px;font-weight:600;color:#0f172a;margin-bottom:16px;line-height:1.55}
+.qtext code,.qtext pre{background:#f1f5f9;color:#0369a1;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:14px}
+.qtext pre{padding:10px 14px;margin:10px 0;display:block;white-space:pre-wrap}
+.row{display:flex;gap:12px;padding:12px 14px;border-radius:8px;margin-top:8px;font-size:14.5px;line-height:1.55}
+.row .tag{flex-shrink:0;font-weight:700;font-size:11.5px;text-transform:uppercase;letter-spacing:.5px;padding:3px 8px;border-radius:4px;height:fit-content;white-space:nowrap}
+.row.wrong{background:#fee2e2;color:#7f1d1d}
+.row.wrong .tag{background:#dc2626;color:#fff}
+.row.ok{background:#dcfce7;color:#14532d}
+.row.ok .tag{background:#16a34a;color:#fff}
+.row.exp{background:#fef3c7;color:#78350f}
+.row.exp .tag{background:#f59e0b;color:#1f2937}
+.row code{background:rgba(0,0,0,.08);padding:1px 5px;border-radius:3px;font-family:Consolas,monospace;font-size:13.5px}
+.empty{background:#fff;border-radius:12px;padding:40px;text-align:center}
+.empty h2{color:#16a34a;font-size:22px;margin-bottom:10px}
+@media print{
+ body{background:#fff;padding:0}
+ header{background:#0ea5e9!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+ .actions{display:none}
+ .q{box-shadow:none;border:1px solid #e2e8f0}
+}
+</style></head><body><div class="wrap">
+<header>
+ <h1>📋 Relatório de erros — LPIC-101</h1>
+ <div class="sub">Gerado em ${dt}</div>
+ <div class="summary">
+  <div><b>${ans}</b>Respondidas</div>
+  <div><b>${state.ok}</b>Acertos</div>
+  <div><b>${state.err}</b>Erros</div>
+  <div><b>${pct}%</b>Aproveitamento</div>
+ </div>
+</header>
+<div class="actions">
+ <button class="btn btn-p" onclick="window.print()">🖨 Imprimir / salvar PDF</button>
+ <button class="btn btn-s" onclick="window.close()">Fechar</button>
+</div>
+${body}
+</div></body></html>`;
+}
+function escapeHTML(s){return (""+s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+function stripHTML(s){
+ // Remove tags mas preserva quebras de <br> e <pre>
+ return (""+s)
+  .replace(/<br\s*\/?>/gi,"\n")
+  .replace(/<\/pre>/gi,"\n")
+  .replace(/<[^>]+>/g,"")
+  .replace(/&nbsp;/g," ")
+  .replace(/&amp;/g,"&")
+  .replace(/&lt;/g,"<")
+  .replace(/&gt;/g,">")
+  .replace(/&#39;/g,"'")
+  .replace(/&quot;/g,'"')
+  .replace(/\n{3,}/g,"\n\n")
+  .trim();
+}
+function buildClaudePrompt(){
+ const wrong=[];
+ Object.keys(state.answered).forEach(k=>{
+  const rec=state.answered[k];if(!rec.correct)wrong.push({qi:+k,rec});
+ });
+ wrong.sort((a,b)=>a.qi-b.qi);
+ if(wrong.length===0)return null;
+ const letters=i=>String.fromCharCode(65+i);
+ const blocos=wrong.map((w,idx)=>{
+  const q=Q[w.qi];
+  const pergunta=stripHTML(q.q);
+  let sua,gab,opcoes="";
+  if(q.t==="t"){
+   sua=stripHTML(""+w.rec.ans);
+   gab=stripHTML(""+q.c);
+  }else{
+   opcoes="Opções:\n"+q.opts.map((o,i)=>`  ${letters(i)}) ${stripHTML(o)}`).join("\n")+"\n";
+   sua=(w.rec.ans||[]).map(i=>`${letters(i)}) ${stripHTML(q.opts[i])}`).join(" | ")||"(em branco)";
+   gab=q.c.map(i=>`${letters(i)}) ${stripHTML(q.opts[i])}`).join(" | ");
+  }
+  return `### Erro ${idx+1} — Questão #${w.qi+1}
+Pergunta: ${pergunta}
+${opcoes}Minha resposta: ${sua}
+Resposta correta: ${gab}
+Explicação técnica (referência): ${stripHTML(q.e||"")}
+`;
+ }).join("\n");
+ const ans=Object.keys(state.answered).length;
+ const pct=ans?Math.round(state.ok*100/ans):0;
+ return `Você é um professor experiente em Linux que está me ajudando a passar na certificação LPIC-101. Estou estudando com simulados e preciso que analise os erros abaixo.
+
+MEU DESEMPENHO: respondi ${ans} questões, acertei ${state.ok}, errei ${state.err} (aproveitamento ${pct}%).
+
+TAREFAS (faça as 3, nessa ordem, em português brasileiro claro e direto):
+
+1) ANÁLISE DE CADA ERRO — para cada erro, escreva no máximo 3 linhas:
+   • O que eu confundi (uma frase)
+   • O jeito certo de lembrar (um mnemônico, macete ou associação simples)
+   • Uma dica prática pra fixar (comando pra rodar, arquivo pra abrir, ou frase-âncora)
+
+2) TEMAS FRACOS — agrupe todos os erros por área de conhecimento (ex.: permissões, boot/GRUB, gerenciamento de pacotes, vi/editores, systemd/init, LVM, processos, redirecionamento de shell, filesystems, kernel/módulos). Liste os temas do MAIS crítico ao menos crítico. Para cada tema:
+   • Diga em uma frase QUAL é o gap
+   • Sugira 1 comando ou arquivo pra praticar hoje
+
+3) MAPA MENTAL — gere um mapa mental funcional em sintaxe Mermaid usando o bloco:
+   \`\`\`mermaid
+   mindmap
+     root((LPIC-101<br/>Meus Pontos Fracos))
+       ...
+   \`\`\`
+   Regras do mapa:
+   • Nó raiz: "LPIC-101 - Meus Pontos Fracos"
+   • Ramos de 1º nível = os temas fracos do passo 2 (máximo 6 ramos)
+   • Ramos de 2º nível = comandos/conceitos específicos que errei (máximo 5 por ramo)
+   • 3º nível opcional pra flags/opções críticas
+   • Cada nó tem NO MÁXIMO 4 palavras (senão não cabe no quadro)
+   • Use texto simples, sem emojis, sem acentos que quebrem o Mermaid
+   • Nada de código longo — só o nome do comando ou conceito
+
+Preciso que o mapa mental seja imprimível em uma folha A4 pra colar no quadro e revisar todo dia até o próximo simulado.
+
+===== MEUS ERROS =====
+
+${blocos}
+===== FIM DOS ERROS =====
+
+Comece direto pela Tarefa 1. Não faça introdução.`;
+}
+async function copyClaudePrompt(){
+ const p=buildClaudePrompt();
+ if(!p){alert("Você ainda não errou nada neste simulado — nada pra analisar. 🎉");return}
+ try{
+  await navigator.clipboard.writeText(p);
+  const msg=`✅ Prompt copiado! (${p.length} caracteres)\n\nAgora:\n1. Abra o Claude (claude.ai)\n2. Cole (Ctrl+V) na conversa\n3. Envie\n\nO Claude vai te devolver: análise de cada erro + temas fracos + mapa mental (Mermaid) pra imprimir e colar no quadro.\n\nDica: pra ver o mapa mental renderizado, cole o bloco \`\`\`mermaid\`\`\` em https://mermaid.live`;
+  alert(msg);
+ }catch(e){
+  // fallback: mostra o texto pra copiar manualmente
+  const w=window.open("","_blank");
+  if(!w){alert("Copie manualmente (Ctrl+A, Ctrl+C):\n\n"+p.substring(0,500)+"...");return}
+  w.document.open();
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Prompt para Claude</title>
+<style>body{font-family:sans-serif;max-width:900px;margin:20px auto;padding:20px}
+h1{font-size:20px}p{color:#555}
+textarea{width:100%;height:70vh;padding:14px;font-family:Consolas,monospace;font-size:13px;border:2px solid #ddd;border-radius:8px}
+button{padding:12px 22px;background:#a855f7;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:15px;font-weight:600;margin-top:12px}
+</style></head><body>
+<h1>🤖 Prompt para o Claude</h1>
+<p>Copie o texto abaixo (botão ou Ctrl+A + Ctrl+C) e cole no <a href="https://claude.ai" target="_blank">claude.ai</a>.</p>
+<textarea id="p" readonly>${escapeHTML(p)}</textarea>
+<button onclick="const t=document.getElementById('p');t.select();document.execCommand('copy');this.textContent='✅ Copiado!'">📋 Copiar tudo</button>
+</body></html>`);
+  w.document.close();
+ }
+}
+function openReport(){
+ const html=buildReportHTML();
+ const w=window.open("","_blank");
+ if(!w){alert("O popup foi bloqueado. Use o botão \"Baixar relatório\" ou libere popups para este arquivo.");return}
+ w.document.open();w.document.write(html);w.document.close();
+}
+function downloadReport(){
+ const html=buildReportHTML();
+ const blob=new Blob([html],{type:"text/html;charset=utf-8"});
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement("a");
+ const stamp=new Date().toISOString().slice(0,10);
+ a.href=url;a.download=`relatorio-erros-lpic101-${stamp}.html`;
+ document.body.appendChild(a);a.click();
+ setTimeout(()=>{URL.revokeObjectURL(url);a.remove()},100);
+}
+
+document.addEventListener("keydown",e=>{
+ const qi=state.order[state.i];const q=Q&&Q[qi];
+ if(!q)return;
+ if(e.key==="ArrowRight"){const btn=document.getElementById("btn-next");if(btn&&!btn.disabled)next()}
+ if(e.key==="ArrowLeft")prev();
+ if(q.t==="s"&&!state.answered[qi]){
+  const k=e.key.toUpperCase();const idx=k.charCodeAt(0)-65;if(idx>=0&&idx<q.opts.length)pick(idx);
+ }
+});
+render();
+</script>
+</body>
+</html>
