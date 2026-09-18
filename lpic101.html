@@ -762,7 +762,7 @@ const HKEY="lpic101_history_v1";
 const TOTAL=Q.length;
 let multiSel=new Set();
 let timerInt=null;
-const state=load()||{phase:"menu",size:0,order:[],i:0,answered:{},ok:0,err:0,startedAt:null,finishedAt:null,historySaved:false};
+const state=load()||{phase:"menu",size:0,order:[],i:0,answered:{},ok:0,err:0,startedAt:null,finishedAt:null,historySaved:false,perms:{}};
 
 function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
 function load(){try{const s=localStorage.getItem(KEY);return s?JSON.parse(s):null}catch(e){return null}}
@@ -776,11 +776,32 @@ function pickRandomN(n){
  }
  return pool.slice(0,Math.min(n,TOTAL));
 }
+function shuffleArray(arr){
+ const a=arr.slice();
+ for(let i=a.length-1;i>0;i--){
+  const j=Math.floor(Math.random()*(i+1));
+  [a[i],a[j]]=[a[j],a[i]];
+ }
+ return a;
+}
+function generatePerms(order){
+ const perms={};
+ order.forEach(qi=>{
+  const q=Q[qi];
+  if(q.t==="t")return;
+  perms[qi]=shuffleArray(q.opts.map((_,i)=>i));
+ });
+ return perms;
+}
+function permOf(qi){
+ return (state.perms&&state.perms[qi])||Q[qi].opts.map((_,i)=>i);
+}
 function startSession(n){
  n=Math.max(1,Math.min(TOTAL,n|0));
  state.phase="quiz";
  state.size=n;
  state.order=pickRandomN(n);
+ state.perms=generatePerms(state.order);
  state.i=0;
  state.answered={};
  state.ok=0;
@@ -797,6 +818,7 @@ function goMenu(){
  state.phase="menu";
  state.order=[];state.i=0;state.answered={};state.ok=0;state.err=0;state.size=0;
  state.startedAt=null;state.finishedAt=null;state.historySaved=false;
+ state.perms={};
  stopTimerTick();
  multiSel.clear();
  save();render();
@@ -892,9 +914,11 @@ function render(){
   html+=`<input type="text" id="txtin" class="text-input" placeholder="Digite sua resposta e pressione Enter" autocomplete="off">`;
  }else{
   html+=`<div class="alts">`;
-  q.opts.forEach((op,idx)=>{
-   const letter=String.fromCharCode(65+idx);
-   html+=`<button class="alt" data-i="${idx}" onclick="pick(${idx})"><span class="letter">${letter}</span><span>${op}</span></button>`;
+  const perm=permOf(qi);
+  perm.forEach((origIdx,pos)=>{
+   const op=q.opts[origIdx];
+   const letter=String.fromCharCode(65+pos);
+   html+=`<button class="alt" data-i="${origIdx}" onclick="pick(${origIdx})"><span class="letter">${letter}</span><span>${op}</span></button>`;
   });
   html+=`</div>`;
   if(q.t==="m")html+=`<p class="hint" style="margin-top:10px">Selecione ${q.c.length} respostas e depois clique em "Confirmar".</p>`;
@@ -966,7 +990,9 @@ function showFeedback(qi,correct){
  let ansTxt="";
  if(q.t==="t")ansTxt=`Resposta correta: <code>${q.c}</code>`;
  else{
-  const letters=q.c.map(i=>String.fromCharCode(65+i)).join(", ");
+  const perm=permOf(qi);
+  const inv={}; perm.forEach((o,p)=>inv[o]=p);
+  const letters=q.c.map(i=>inv[i]).sort((a,b)=>a-b).map(p=>String.fromCharCode(65+p)).join(", ");
   ansTxt=`Resposta correta: <b>${letters}</b>`;
  }
  fb.className="feedback "+(correct?"ok":"err");
@@ -1273,7 +1299,8 @@ document.addEventListener("keydown",e=>{
  if(e.key==="ArrowRight"){const btn=document.getElementById("btn-next");if(btn&&!btn.disabled)next()}
  if(e.key==="ArrowLeft")prev();
  if(q.t==="s"&&!state.answered[qi]){
-  const k=e.key.toUpperCase();const idx=k.charCodeAt(0)-65;if(idx>=0&&idx<q.opts.length)pick(idx);
+  const k=e.key.toUpperCase();const pos=k.charCodeAt(0)-65;
+  if(pos>=0&&pos<q.opts.length){const perm=permOf(qi);pick(perm[pos])}
  }
 });
 render();
