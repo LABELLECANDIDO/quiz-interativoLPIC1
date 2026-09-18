@@ -90,13 +90,14 @@ h1{font-size:22px;margin-bottom:4px;letter-spacing:-.2px}
 <div class="stat"><b id="s-err">0</b>Erros</div>
 <div class="stat"><b id="s-pct">0%</b>Aproveitamento</div>
 <div class="stat"><b id="s-rem">0</b>Restantes</div>
+<div class="stat"><b id="s-time">00:00</b>Tempo</div>
 </div>
 <div class="progress" id="progresswrap" style="display:none"><div class="pbar" id="pbar"></div></div>
 <div class="mode-toggle">
 <button onclick="goMenu()">🔄 Novo simulado</button>
 <button onclick="openReport()" style="background:#f59e0b;color:#1f2937">📋 Ver erros</button>
 <button onclick="downloadReport()" style="background:#22c55e;color:#0f172a">⬇ Baixar relatório</button>
-<button onclick="copyClaudePrompt()" style="background:#a855f7;color:#fff">🤖 Prompt p/ Claude</button>
+<button onclick="openHistory()" style="background:#a855f7;color:#fff">📚 Histórico</button>
 </div>
 </header>
 <main class="card" id="main"></main>
@@ -756,9 +757,11 @@ e:`O initramfs é um cpio comprimido usado pelo kernel apenas até que os driver
 //  Motor do quiz
 // ============================================================
 const KEY="lpic101_state_v2";
+const HKEY="lpic101_history_v1";
 const TOTAL=Q.length;
 let multiSel=new Set();
-const state=load()||{phase:"menu",size:0,order:[],i:0,answered:{},ok:0,err:0};
+let timerInt=null;
+const state=load()||{phase:"menu",size:0,order:[],i:0,answered:{},ok:0,err:0,startedAt:null,finishedAt:null,historySaved:false};
 
 function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
 function load(){try{const s=localStorage.getItem(KEY);return s?JSON.parse(s):null}catch(e){return null}}
@@ -781,6 +784,9 @@ function startSession(n){
  state.answered={};
  state.ok=0;
  state.err=0;
+ state.startedAt=Date.now();
+ state.finishedAt=null;
+ state.historySaved=false;
  multiSel.clear();
  save();render();
 }
@@ -789,8 +795,48 @@ function goMenu(){
  if(state.phase==="quiz" && ans>0 && !confirm("Sair do simulado atual? Seu progresso deste simulado será perdido."))return;
  state.phase="menu";
  state.order=[];state.i=0;state.answered={};state.ok=0;state.err=0;state.size=0;
+ state.startedAt=null;state.finishedAt=null;state.historySaved=false;
+ stopTimerTick();
  multiSel.clear();
  save();render();
+}
+
+function fmtTime(ms){
+ const s=Math.max(0,Math.floor((ms||0)/1000));
+ const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;
+ const pad=n=>String(n).padStart(2,"0");
+ return h>0?`${pad(h)}:${pad(m)}:${pad(sec)}`:`${pad(m)}:${pad(sec)}`;
+}
+function currentElapsed(){
+ if(!state.startedAt)return 0;
+ const end=state.finishedAt||Date.now();
+ return end-state.startedAt;
+}
+function startTimerTick(){
+ stopTimerTick();
+ timerInt=setInterval(()=>{
+  const el=document.getElementById("s-time");
+  if(el)el.textContent=fmtTime(currentElapsed());
+ },1000);
+}
+function stopTimerTick(){if(timerInt){clearInterval(timerInt);timerInt=null}}
+
+function loadHistory(){try{const s=localStorage.getItem(HKEY);return s?JSON.parse(s):[]}catch(e){return[]}}
+function saveHistory(arr){try{localStorage.setItem(HKEY,JSON.stringify(arr))}catch(e){}}
+function currentSessionEntry(){
+ const wrong=[];
+ Object.keys(state.answered).forEach(k=>{
+  const rec=state.answered[k];
+  if(!rec.correct)wrong.push({qi:+k,ans:rec.ans});
+ });
+ wrong.sort((a,b)=>a.qi-b.qi);
+ return {date:Date.now(),size:state.size,ok:state.ok,err:state.err,elapsed:currentElapsed(),wrong};
+}
+function commitToHistory(){
+ const arr=loadHistory();
+ arr.unshift(currentSessionEntry());
+ if(arr.length>50)arr.length=50;
+ saveHistory(arr);
 }
 function reset(){if(!confirm("Zerar todo o progresso e voltar ao menu?"))return;localStorage.removeItem(KEY);location.reload()}
 
@@ -802,6 +848,7 @@ function updateStats(){
  if(state.phase==="menu"){
   stats.style.display="none";progWrap.style.display="none";
   sub.textContent="Escolha o tamanho do simulado para começar";
+  stopTimerTick();
  }else{
   stats.style.display="flex";progWrap.style.display="block";
   sub.textContent=`Simulado de ${size} questões · Feedback imediato após cada resposta`;
@@ -811,6 +858,8 @@ function updateStats(){
   document.getElementById("s-pct").textContent=pct+"%";
   document.getElementById("s-rem").textContent=Math.max(0,size-ans);
   document.getElementById("pbar").style.width=(size?ans*100/size:0)+"%";
+  document.getElementById("s-time").textContent=fmtTime(currentElapsed());
+  if(state.finishedAt)stopTimerTick();else startTimerTick();
  }
 }
 
@@ -957,15 +1006,19 @@ function startCustom(){
 function renderFinished(main){
  const ans=Object.keys(state.answered).length;
  const pct=ans?Math.round(state.ok*100/ans):0;
+ if(!state.finishedAt)state.finishedAt=Date.now();
+ stopTimerTick();
+ if(!state.historySaved){commitToHistory();state.historySaved=true;save()}
+ const elapsedTxt=fmtTime(currentElapsed());
  const nivel=pct>=80?{txt:"🎉 Excelente!",cor:"#22c55e"}:pct>=60?{txt:"👍 Bom progresso",cor:"#0ea5e9"}:pct>=40?{txt:"📚 Continue estudando",cor:"#f59e0b"}:{txt:"⚠ Foque nos erros",cor:"#dc2626"};
  main.innerHTML=`<div class="finished">
   <h2 style="color:${nivel.cor}">${nivel.txt}</h2>
   <p>Você respondeu <b>${ans}</b> de <b>${state.size}</b> questões do simulado.</p>
-  <p>Acertos: <b>${state.ok}</b> · Erros: <b>${state.err}</b> · Aproveitamento: <b>${pct}%</b></p>
+  <p>Acertos: <b>${state.ok}</b> · Erros: <b>${state.err}</b> · Aproveitamento: <b>${pct}%</b> · Tempo: <b>${elapsedTxt}</b></p>
   <div class="actions">
    <button class="btn btn-primary" onclick="openReport()" style="background:#f59e0b;color:#1f2937">📋 Ver relatório dos erros</button>
-   <button class="btn btn-primary" onclick="copyClaudePrompt()" style="background:#a855f7">🤖 Copiar prompt p/ Claude analisar</button>
    <button class="btn btn-secondary" onclick="downloadReport()">⬇ Baixar relatório</button>
+   <button class="btn btn-primary" onclick="openHistory()" style="background:#a855f7">📚 Ver histórico</button>
    <button class="btn btn-secondary" onclick="state.i=0;save();render()">🔍 Revisar questões</button>
    <button class="btn btn-primary" onclick="goMenu()">🔄 Novo simulado</button>
    <button class="btn btn-danger" onclick="reset()">Zerar tudo</button>
@@ -1066,114 +1119,134 @@ ${body}
 </div></body></html>`;
 }
 function escapeHTML(s){return (""+s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
-function stripHTML(s){
- // Remove tags mas preserva quebras de <br> e <pre>
- return (""+s)
-  .replace(/<br\s*\/?>/gi,"\n")
-  .replace(/<\/pre>/gi,"\n")
-  .replace(/<[^>]+>/g,"")
-  .replace(/&nbsp;/g," ")
-  .replace(/&amp;/g,"&")
-  .replace(/&lt;/g,"<")
-  .replace(/&gt;/g,">")
-  .replace(/&#39;/g,"'")
-  .replace(/&quot;/g,'"')
-  .replace(/\n{3,}/g,"\n\n")
-  .trim();
-}
-function buildClaudePrompt(){
- const wrong=[];
- Object.keys(state.answered).forEach(k=>{
-  const rec=state.answered[k];if(!rec.correct)wrong.push({qi:+k,rec});
- });
- wrong.sort((a,b)=>a.qi-b.qi);
- if(wrong.length===0)return null;
+
+function buildHistoryHTML(){
+ const arr=loadHistory();
+ const dt=new Date().toLocaleString("pt-BR");
  const letters=i=>String.fromCharCode(65+i);
- const blocos=wrong.map((w,idx)=>{
-  const q=Q[w.qi];
-  const pergunta=stripHTML(q.q);
-  let sua,gab,opcoes="";
-  if(q.t==="t"){
-   sua=stripHTML(""+w.rec.ans);
-   gab=stripHTML(""+q.c);
-  }else{
-   opcoes="Opções:\n"+q.opts.map((o,i)=>`  ${letters(i)}) ${stripHTML(o)}`).join("\n")+"\n";
-   sua=(w.rec.ans||[]).map(i=>`${letters(i)}) ${stripHTML(q.opts[i])}`).join(" | ")||"(em branco)";
-   gab=q.c.map(i=>`${letters(i)}) ${stripHTML(q.opts[i])}`).join(" | ");
-  }
-  return `### Erro ${idx+1} — Questão #${w.qi+1}
-Pergunta: ${pergunta}
-${opcoes}Minha resposta: ${sua}
-Resposta correta: ${gab}
-Explicação técnica (referência): ${stripHTML(q.e||"")}
-`;
- }).join("\n");
- const ans=Object.keys(state.answered).length;
- const pct=ans?Math.round(state.ok*100/ans):0;
- return `Você é um professor experiente em Linux que está me ajudando a passar na certificação LPIC-101. Estou estudando com simulados e preciso que analise os erros abaixo.
-
-MEU DESEMPENHO: respondi ${ans} questões, acertei ${state.ok}, errei ${state.err} (aproveitamento ${pct}%).
-
-TAREFAS (faça as 3, nessa ordem, em português brasileiro claro e direto):
-
-1) ANÁLISE DE CADA ERRO — para cada erro, escreva no máximo 3 linhas:
-   • O que eu confundi (uma frase)
-   • O jeito certo de lembrar (um mnemônico, macete ou associação simples)
-   • Uma dica prática pra fixar (comando pra rodar, arquivo pra abrir, ou frase-âncora)
-
-2) TEMAS FRACOS — agrupe todos os erros por área de conhecimento (ex.: permissões, boot/GRUB, gerenciamento de pacotes, vi/editores, systemd/init, LVM, processos, redirecionamento de shell, filesystems, kernel/módulos). Liste os temas do MAIS crítico ao menos crítico. Para cada tema:
-   • Diga em uma frase QUAL é o gap
-   • Sugira 1 comando ou arquivo pra praticar hoje
-
-3) MAPA MENTAL — gere um mapa mental funcional em sintaxe Mermaid usando o bloco:
-   \`\`\`mermaid
-   mindmap
-     root((LPIC-101<br/>Meus Pontos Fracos))
-       ...
-   \`\`\`
-   Regras do mapa:
-   • Nó raiz: "LPIC-101 - Meus Pontos Fracos"
-   • Ramos de 1º nível = os temas fracos do passo 2 (máximo 6 ramos)
-   • Ramos de 2º nível = comandos/conceitos específicos que errei (máximo 5 por ramo)
-   • 3º nível opcional pra flags/opções críticas
-   • Cada nó tem NO MÁXIMO 4 palavras (senão não cabe no quadro)
-   • Use texto simples, sem emojis, sem acentos que quebrem o Mermaid
-   • Nada de código longo — só o nome do comando ou conceito
-
-Preciso que o mapa mental seja imprimível em uma folha A4 pra colar no quadro e revisar todo dia até o próximo simulado.
-
-===== MEUS ERROS =====
-
-${blocos}
-===== FIM DOS ERROS =====
-
-Comece direto pela Tarefa 1. Não faça introdução.`;
-}
-async function copyClaudePrompt(){
- const p=buildClaudePrompt();
- if(!p){alert("Você ainda não errou nada neste simulado — nada pra analisar. 🎉");return}
- try{
-  await navigator.clipboard.writeText(p);
-  const msg=`✅ Prompt copiado! (${p.length} caracteres)\n\nAgora:\n1. Abra o Claude (claude.ai)\n2. Cole (Ctrl+V) na conversa\n3. Envie\n\nO Claude vai te devolver: análise de cada erro + temas fracos + mapa mental (Mermaid) pra imprimir e colar no quadro.\n\nDica: pra ver o mapa mental renderizado, cole o bloco \`\`\`mermaid\`\`\` em https://mermaid.live`;
-  alert(msg);
- }catch(e){
-  // fallback: mostra o texto pra copiar manualmente
-  const w=window.open("","_blank");
-  if(!w){alert("Copie manualmente (Ctrl+A, Ctrl+C):\n\n"+p.substring(0,500)+"...");return}
-  w.document.open();
-  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Prompt para Claude</title>
-<style>body{font-family:sans-serif;max-width:900px;margin:20px auto;padding:20px}
-h1{font-size:20px}p{color:#555}
-textarea{width:100%;height:70vh;padding:14px;font-family:Consolas,monospace;font-size:13px;border:2px solid #ddd;border-radius:8px}
-button{padding:12px 22px;background:#a855f7;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:15px;font-weight:600;margin-top:12px}
-</style></head><body>
-<h1>🤖 Prompt para o Claude</h1>
-<p>Copie o texto abaixo (botão ou Ctrl+A + Ctrl+C) e cole no <a href="https://claude.ai" target="_blank">claude.ai</a>.</p>
-<textarea id="p" readonly>${escapeHTML(p)}</textarea>
-<button onclick="const t=document.getElementById('p');t.select();document.execCommand('copy');this.textContent='✅ Copiado!'">📋 Copiar tudo</button>
-</body></html>`);
-  w.document.close();
+ let body="";
+ if(arr.length===0){
+  body=`<div class="empty"><h2>Nenhum simulado registrado ainda.</h2><p>Termine um simulado e ele aparecerá aqui automaticamente.</p></div>`;
+ }else{
+  const totSim=arr.length;
+  const totErr=arr.reduce((a,s)=>a+s.err,0);
+  const totOk=arr.reduce((a,s)=>a+s.ok,0);
+  const totAns=totOk+totErr;
+  const pctGeral=totAns?Math.round(totOk*100/totAns):0;
+  body=`<div class="overall">
+   <div><b>${totSim}</b>Simulados</div>
+   <div><b>${totOk}</b>Acertos totais</div>
+   <div><b>${totErr}</b>Erros totais</div>
+   <div><b>${pctGeral}%</b>Aproveitamento geral</div>
+  </div>`;
+  body+=arr.map((s,idx)=>{
+   const when=new Date(s.date).toLocaleString("pt-BR");
+   const ans=s.ok+s.err;
+   const pct=ans?Math.round(s.ok*100/ans):0;
+   const elapsedTxt=fmtTime(s.elapsed||0);
+   const wrongsHTML=(s.wrong||[]).length===0
+    ? `<p class="none">🎉 Sem erros neste simulado.</p>`
+    : s.wrong.map((w,i)=>{
+      const q=Q[w.qi];
+      if(!q)return `<article class="q"><h3>Questão #${w.qi+1} (não disponível)</h3></article>`;
+      let sua="",gab="";
+      if(q.t==="t"){
+       sua=`<code>${escapeHTML(""+w.ans)}</code>`;
+       gab=`<code>${escapeHTML(q.c)}</code>`;
+      }else{
+       sua=(w.ans||[]).map(x=>`<b>${letters(x)}</b> — ${q.opts[x]}`).join("<br>")||"<i>(sem resposta)</i>";
+       gab=q.c.map(x=>`<b>${letters(x)}</b> — ${q.opts[x]}`).join("<br>");
+      }
+      return `<article class="q">
+       <h3>Erro ${i+1} · Questão original #${w.qi+1}</h3>
+       <div class="qtext">${q.q}</div>
+       <div class="row wrong"><span class="tag">Sua resposta</span><div>${sua}</div></div>
+       <div class="row ok"><span class="tag">Resposta correta</span><div>${gab}</div></div>
+       <div class="row exp"><span class="tag">Explicação</span><div>${q.e||""}</div></div>
+      </article>`;
+    }).join("");
+   return `<section class="sess">
+    <header class="sess-head">
+     <h2>Simulado ${totSim-idx} · <span class="when">${when}</span></h2>
+     <div class="sess-summary">
+      <div><b>${s.size}</b>Questões</div>
+      <div><b>${s.ok}</b>Acertos</div>
+      <div><b>${s.err}</b>Erros</div>
+      <div><b>${pct}%</b>Aproveitamento</div>
+      <div><b>${elapsedTxt}</b>Tempo</div>
+     </div>
+    </header>
+    <details ${idx===0?"open":""}>
+     <summary>Ver ${(s.wrong||[]).length} erro(s) detalhado(s)</summary>
+     <div class="sess-body">${wrongsHTML}</div>
+    </details>
+   </section>`;
+  }).join("");
  }
+ return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Histórico — LPIC-101</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"Segoe UI",Roboto,sans-serif;background:#f8fafc;color:#0f172a;padding:24px;line-height:1.55}
+.wrap{max-width:900px;margin:0 auto}
+header.top{background:linear-gradient(135deg,#0ea5e9,#6366f1);color:#fff;padding:24px;border-radius:12px;margin-bottom:20px}
+h1{font-size:22px;margin-bottom:6px}
+.sub{opacity:.9;font-size:14px}
+.actions{margin-bottom:20px;display:flex;gap:8px;flex-wrap:wrap}
+.btn{padding:10px 18px;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;font-family:inherit}
+.btn-p{background:#0ea5e9;color:#fff}
+.btn-s{background:#e2e8f0;color:#0f172a}
+.btn-d{background:#dc2626;color:#fff}
+.overall{display:flex;gap:12px;flex-wrap:wrap;background:#fff;border-radius:12px;padding:18px;margin-bottom:18px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.overall div{background:#f1f5f9;padding:8px 14px;border-radius:8px;font-size:13px;color:#334155;flex:1;min-width:130px}
+.overall b{font-size:20px;display:block;color:#0f172a;font-weight:800}
+.sess{background:#fff;border-radius:12px;padding:20px;margin-bottom:18px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.sess-head h2{font-size:16px;color:#0f172a;margin-bottom:12px}
+.sess-head .when{color:#64748b;font-weight:500;font-size:14px}
+.sess-summary{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.sess-summary div{background:#f1f5f9;padding:6px 12px;border-radius:6px;font-size:12.5px;color:#334155}
+.sess-summary b{font-size:15px;display:block;color:#0f172a}
+details summary{cursor:pointer;padding:10px 14px;background:#f1f5f9;border-radius:8px;font-size:13.5px;color:#0369a1;font-weight:600;user-select:none;list-style:none}
+details summary::-webkit-details-marker{display:none}
+details summary::before{content:"▸ ";display:inline-block;transition:transform .15s}
+details[open] summary::before{transform:rotate(90deg)}
+details[open] summary{margin-bottom:14px}
+.sess-body{padding:0}
+.q{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:16px;margin-bottom:12px}
+.q h3{font-size:12.5px;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;font-weight:700}
+.qtext{font-size:15px;font-weight:600;color:#0f172a;margin-bottom:12px;line-height:1.55}
+.qtext code,.qtext pre{background:#f1f5f9;color:#0369a1;padding:2px 6px;border-radius:4px;font-family:Consolas,monospace;font-size:13.5px}
+.qtext pre{padding:10px 14px;margin:8px 0;display:block;white-space:pre-wrap}
+.row{display:flex;gap:10px;padding:10px 12px;border-radius:8px;margin-top:6px;font-size:14px;line-height:1.55}
+.row .tag{flex-shrink:0;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.5px;padding:3px 8px;border-radius:4px;height:fit-content;white-space:nowrap}
+.row.wrong{background:#fee2e2;color:#7f1d1d}
+.row.wrong .tag{background:#dc2626;color:#fff}
+.row.ok{background:#dcfce7;color:#14532d}
+.row.ok .tag{background:#16a34a;color:#fff}
+.row.exp{background:#fef3c7;color:#78350f}
+.row.exp .tag{background:#f59e0b;color:#1f2937}
+.row code{background:rgba(0,0,0,.08);padding:1px 5px;border-radius:3px;font-family:Consolas,monospace;font-size:13px}
+.empty{background:#fff;border-radius:12px;padding:40px;text-align:center}
+.empty h2{color:#64748b;font-size:20px;margin-bottom:10px}
+.none{color:#14532d;padding:12px;background:#dcfce7;border-radius:8px;text-align:center;font-weight:600}
+@media print{body{background:#fff;padding:0}header.top{background:#0ea5e9!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.actions{display:none}details>summary{display:none}details>*:not(summary){display:block!important}.q{box-shadow:none}}
+</style></head><body><div class="wrap">
+<header class="top">
+ <h1>📚 Histórico de simulados — LPIC-101</h1>
+ <div class="sub">${arr.length} simulado(s) salvo(s) · Gerado em ${dt}</div>
+</header>
+<div class="actions">
+ <button class="btn btn-p" onclick="window.print()">🖨 Imprimir / salvar PDF</button>
+ <button class="btn btn-d" onclick="if(confirm('Apagar TODO o histórico? Não dá para desfazer.')){try{window.opener.localStorage.removeItem('${HKEY}');alert('Histórico apagado. Recarregue esta janela para conferir.')}catch(e){alert('Não foi possível apagar automaticamente. Feche esta janela e limpe pela página principal.')}}">🗑 Apagar histórico</button>
+ <button class="btn btn-s" onclick="window.close()">Fechar</button>
+</div>
+${body}
+</div></body></html>`;
+}
+function openHistory(){
+ const html=buildHistoryHTML();
+ const w=window.open("","_blank");
+ if(!w){alert("O popup foi bloqueado. Libere popups para esta página e tente de novo.");return}
+ w.document.open();w.document.write(html);w.document.close();
 }
 function openReport(){
  const html=buildReportHTML();
