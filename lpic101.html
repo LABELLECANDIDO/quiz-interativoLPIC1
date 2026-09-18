@@ -98,6 +98,7 @@ h1{font-size:22px;margin-bottom:4px;letter-spacing:-.2px}
 <button onclick="openReport()" style="background:#f59e0b;color:#1f2937">📋 Ver erros</button>
 <button onclick="downloadReport()" style="background:#22c55e;color:#0f172a">⬇ Baixar relatório</button>
 <button onclick="openHistory()" style="background:#a855f7;color:#fff">📚 Histórico</button>
+<button id="btn-end" onclick="endSession()" style="background:#dc2626;color:#fff;display:none">🛑 Encerrar simulado</button>
 </div>
 </header>
 <main class="card" id="main"></main>
@@ -800,6 +801,16 @@ function goMenu(){
  multiSel.clear();
  save();render();
 }
+function endSession(){
+ if(state.phase!=="quiz"||state.finishedAt)return;
+ const ans=Object.keys(state.answered).length;
+ const msg=ans===0
+  ? "Encerrar simulado agora? Você ainda não respondeu nenhuma questão."
+  : `Encerrar simulado agora? Suas ${ans} resposta(s) já feita(s) serão contabilizadas.`;
+ if(!confirm(msg))return;
+ state.i=state.order.length;
+ save();render();
+}
 
 function fmtTime(ms){
  const s=Math.max(0,Math.floor((ms||0)/1000));
@@ -861,6 +872,8 @@ function updateStats(){
   document.getElementById("s-time").textContent=fmtTime(currentElapsed());
   if(state.finishedAt)stopTimerTick();else startTimerTick();
  }
+ const endBtn=document.getElementById("btn-end");
+ if(endBtn)endBtn.style.display=(state.phase==="quiz"&&!state.finishedAt&&state.i<state.order.length)?"":"none";
 }
 
 function render(){
@@ -978,8 +991,8 @@ function next(){if(state.i<state.order.length-1){state.i++;multiSel.clear();save
 function prev(){if(state.i>0){state.i--;multiSel.clear();save();render()}}
 
 function renderMenu(main){
- const sizes=[10,20,30,60,TOTAL];
- const labels={10:"Rápido",20:"Curto",30:"Padrão",60:"Longo",[TOTAL]:"Simulado completo"};
+ const sizes=[10,20,30,60,90];
+ const labels={10:"Rápido",20:"Curto",30:"Padrão",60:"Longo",90:"Padrão LPIC"};
  const cards=sizes.map(n=>`<button class="menu-opt" onclick="startSession(${n})">
    <b>${n}</b>questões
    <small>${labels[n]||""}</small>
@@ -988,19 +1001,8 @@ function renderMenu(main){
   <h2>🎯 Escolha o tamanho do simulado</h2>
   <p>As questões são sorteadas aleatoriamente das <b>${TOTAL}</b> disponíveis do LPIC-101. Cada simulado é independente, e ao final você pode gerar o relatório dos erros pra estudar só o que faltou.</p>
   <div class="menu-grid">${cards}</div>
-  <div class="menu-custom">
-   <label for="custom-n">Ou defina sua quantidade:</label>
-   <input type="number" id="custom-n" min="1" max="${TOTAL}" value="25" onkeydown="if(event.key==='Enter'){startCustom()}">
-   <button class="btn btn-primary" onclick="startCustom()">Começar</button>
-  </div>
-  <div class="menu-tip">💡 <b>Dica:</b> use <b>20 ou 30</b> em sessões de estudo diário. Faça o simulado, veja o relatório de erros, revise os pontos fracos e refaça. Simulados de <b>60+</b> imitam melhor o clima da prova real.</div>
+  <div class="menu-tip">💡 <b>Dica:</b> use <b>20 ou 30</b> em sessões de estudo diário. Faça o simulado, veja o relatório de erros, revise os pontos fracos e refaça. O simulado de <b>90</b> imita o clima e o tamanho da prova real do LPIC.</div>
  </div>`;
-}
-function startCustom(){
- const inp=document.getElementById("custom-n");
- const n=parseInt(inp.value,10);
- if(!n||n<1){inp.focus();return}
- startSession(Math.min(n,TOTAL));
 }
 
 function renderFinished(main){
